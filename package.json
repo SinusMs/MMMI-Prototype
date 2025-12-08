@@ -1,0 +1,30 @@
+{
+  "name": "mmmi-prototype",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SinusMs/MMMI-Prototype.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/SinusMs/MMMI-Prototype/issues"
+  },
+  "homepage": "https://github.com/SinusMs/MMMI-Prototype#readme",
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.22-rc.20250304",
+    "p5": "^2.1.1"
+  },
+  "devDependencies": {
+    "vite": "^7.2.7"
+  }
+}
