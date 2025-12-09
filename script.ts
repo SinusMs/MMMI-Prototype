@@ -6,20 +6,25 @@ type Vector2 = {
     y: number
 }
 
+const MAX_BUFFER_SIZE = 3;
 class ResultsHandler {
-    private buffer: { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null } | null = null;
+    private buffer: { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null }[] = [];
 
-    public hasResults(): boolean {
-        return this.buffer != null;
+    public getLatestResult(): { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null } | null { 
+        if (this.buffer.length == 0) return null; 
+        return this.buffer[this.buffer.length - 1]; 
     }
 
-    public getLatestResult(): { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null, } | null { 
-        return this.buffer;
+    public getGesture(): string {
+        return this.getLatestResult()?.result?.gestures[0]?.at(0)?.categoryName || '';
     }
 
     public addResult(result: GestureRecognizerResult, timestamp: number): void {
         let handposition = this.calcHandPosition(result);
-        this.buffer = ({ result, timestamp, handposition });
+        this.buffer.push({ result, timestamp, handposition }); 
+        if (this.buffer.length > MAX_BUFFER_SIZE) {
+            this.buffer.shift();
+        }
     }
 
     private calcHandPosition(result: GestureRecognizerResult): Vector2 | null {
@@ -32,10 +37,6 @@ class ResultsHandler {
         }
         const n = pts.length;
         return { x: x / n, y: y / n };
-    }
-
-    public getGesture(): string {
-        return this.getLatestResult()?.result?.gestures[0]?.at(0)?.categoryName || '';
     }
 }
 
@@ -54,6 +55,8 @@ const gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
 let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
 let results: ResultsHandler = new ResultsHandler();
+let recTime: number = -1;
+let addTime: number = -1;
 
 
 const sketch = (sk: p5) => {
@@ -66,11 +69,14 @@ const sketch = (sk: p5) => {
     sk.draw = () => {
         sk.background(200);
         sk.fill(255, 0, 0);
-        if (results.hasResults()) {
-            let handPosition = results.getLatestResult()?.handposition;
+        let result = results.getLatestResult();
+        if (result) {
+            let handPosition = result.handposition;
             if (handPosition)
                 sk.ellipse(sk.width * (1 - handPosition.x), sk.height * handPosition.y, 50, 50);
-            sk.text(results.getGesture(), 10, 30);   
+            sk.text(results.getGesture(), 10, 30);
+            sk.text("recognize Time: " + recTime, 10, 50);
+            sk.text("add Time: " + addTime, 10, 60);
         }
     };
 };
@@ -81,11 +87,9 @@ function recoginzeGestures() {
     let timestamp = performance.now();
     let t0 = performance.now()
     let res = gestureRecognizer.recognizeForVideo(vidSrc.elt, timestamp);
-    let t1 = performance.now()
-    console.log("gesture recognizer time:", t1 - t0, "ms");
-    let t2 = performance.now();
+    recTime = performance.now() - t0;
+    let t1 = performance.now();
     results.addResult(res, timestamp);
-    let t3 = performance.now();
-    console.log("add result time:", t3 - t2, "ms");
+    addTime = performance.now() - t1;
     vidSrc.elt.requestVideoFrameCallback(recoginzeGestures);
 }
