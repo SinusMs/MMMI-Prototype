@@ -30,8 +30,15 @@ const sketch = (sk: p5) => {
         sk.background(200);
         sk.fill(255, 0, 0);
         if (result != null && result.gestures.length > 0) {
-            let indexFingerTip = result.landmarks[0][8];
-            sk.ellipse(sk.width * (1 - indexFingerTip.x), sk.height * indexFingerTip.y, 50, 50);
+            let handPosition = result.landmarks[0]
+                .map(landmark => ({x: landmark.x, y: landmark.y, z: landmark.z}))
+                .reduce((prev, curr) => ({x: prev.x + curr.x, y: prev.y + curr.y, z: prev.z + curr.z}));
+            handPosition = {
+                x: handPosition.x / result.landmarks[0].length,
+                y: handPosition.y / result.landmarks[0].length,
+                z: handPosition.z / result.landmarks[0].length
+            };
+            sk.ellipse(sk.width * (1 - handPosition.x), sk.height * handPosition.y, 50, 50);
             let gesture = (result as GestureRecognizerResult).gestures[0][0].categoryName;
             sk.text(gesture, 10, 30);   
         }
