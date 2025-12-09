@@ -13,47 +13,34 @@ const gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
     numHands: 2,
     runningMode: 'VIDEO',
 });
+
 let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
-let videoReady = false;
+let result: GestureRecognizerResult | null = null;
 
 
 const sketch = (sk: p5) => {
     sk.setup = () => {
         sk.createCanvas(640, 480, canvasEl); 
         vidSrc = sk.createCapture(sk.VIDEO) as p5.MediaElement<HTMLVideoElement>;
-        vidSrc!.elt.onloadeddata = () => {
-            console.log("Webcam ready:", vidSrc!.elt.videoWidth, vidSrc!.elt.videoHeight);
-            videoReady = true;
-        };
+        vidSrc.elt.onloadeddata = predictWebcam;
     };
     
     sk.draw = () => {
         sk.background(200);
         sk.fill(255, 0, 0);
-        if (videoReady) {
-            let result = predictWebcam();
-            if (result != null && result.gestures.length > 0) {
-                let indexFingerTip = result.landmarks[0][8];
-                sk.ellipse(sk.width * (1 - indexFingerTip.x), sk.height * indexFingerTip.y, 50, 50);
-                let gesture = (result as GestureRecognizerResult).gestures[0][0].categoryName;
-                sk.text(gesture, 10, 30);
-                console.log(result);
-            }
+        if (result != null && result.gestures.length > 0) {
+            let indexFingerTip = result.landmarks[0][8];
+            sk.ellipse(sk.width * (1 - indexFingerTip.x), sk.height * indexFingerTip.y, 50, 50);
+            let gesture = (result as GestureRecognizerResult).gestures[0][0].categoryName;
+            sk.text(gesture, 10, 30);   
         }
     };
 };
 new p5(sketch);
 
-
-let lastVideoTime = -1;
-function predictWebcam(): GestureRecognizerResult | null {
-    if (!vidSrc) return null;
-    const webcamElement = vidSrc?.elt as HTMLVideoElement;
-    // Now let's start detecting the stream.
-    if (vidSrc.elt.currentTime !== lastVideoTime) {
-        lastVideoTime = vidSrc.elt.currentTime;
-        return gestureRecognizer.recognizeForVideo(webcamElement, performance.now());
-    }
-    return null;
+function predictWebcam(): void {
+    if (!vidSrc) return;
+    result = gestureRecognizer.recognizeForVideo(vidSrc.elt, performance.now());
+    vidSrc.elt.requestVideoFrameCallback(predictWebcam);
 }
