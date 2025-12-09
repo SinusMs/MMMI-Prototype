@@ -46,7 +46,8 @@ const vision = await FilesetResolver.forVisionTasks(
 );
 const gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
     baseOptions: {
-        modelAssetPath: "mediapipe/gesture_recognizer.task"
+        modelAssetPath: "mediapipe/gesture_recognizer.task",
+        delegate: "GPU"
     },
     numHands: 2,
     runningMode: 'VIDEO',
@@ -75,7 +76,7 @@ const sketch = (sk: p5) => {
             if (handPosition)
                 sk.ellipse(sk.width * (1 - handPosition.x), sk.height * handPosition.y, 50, 50);
             sk.text(results.getGesture(), 10, 30);
-            sk.text("recognize Time: " + recTime, 10, 50);
+            sk.text("recognize Time: " + recTime.toFixed(1), 10, 50);
             sk.text("add Time: " + addTime, 10, 60);
         }
     };
