@@ -4,8 +4,7 @@ import { ResultsHandler } from './resultshandler';
 let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
 let results: ResultsHandler = new ResultsHandler();
-let recTime: number = -1;
-let bmpTime: number = -1;
+let vidProcessingTime: number = -1;
 
 const worker = new Worker(new URL('./gesture-worker.js', import.meta.url));
 worker.onmessage = (e) => {
@@ -15,7 +14,7 @@ worker.onmessage = (e) => {
             break;
         case "result":
             results.addResult(data.result, performance.now());
-            recTime = data.dtime;
+            vidProcessingTime = performance.now() - data.t0;
             break;
         default:
             console.warn("Unknown message type from worker: ", type), e.data;
@@ -42,9 +41,8 @@ const sketch = (sk: p5) => {
             sk.text(results.getGesture(), 10, 30);
         }
         sk.text("framerate: " + sk.frameRate().toFixed(1) + " fps", 10, 50);
-        sk.text("recognize time: " + recTime.toFixed(1).padStart(4, '0') + " ms", 10, 60);
+        sk.text("video processing time: " + vidProcessingTime.toFixed(1).padStart(4, '0') + " ms", 10, 60);
         sk.text("draw time: " + (performance.now() - t0).toFixed(1).padStart(4, '0')+ " ms", 10, 70);
-        sk.text("bitmap time: " + bmpTime.toFixed(1).padStart(4, '0')+ " ms", 10, 80);
     };
 };
 new p5(sketch);
@@ -59,11 +57,11 @@ function recoginzeGestures() {
                 type: "frame",
                 data: {
                     bitmap: bmp,
+                    t0
                 }
             },
             [bmp]
         );
-        bmpTime = performance.now() - t0;
         vidSrc!.elt.requestVideoFrameCallback(recoginzeGestures);
     });
 }

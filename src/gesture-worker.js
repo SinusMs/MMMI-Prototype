@@ -23,8 +23,7 @@ self.onmessage = async (e) => {
     }
 
     if (type === "frame" && recognizer) {
-        const t0 = performance.now();
-        const { bitmap } = data;
+        const { bitmap, t0 } = data;
         if (!bitmap) {
             self.postMessage({ type: "error", data: { error: "Missing bitmap in frame message" } });
             return;
@@ -38,7 +37,7 @@ self.onmessage = async (e) => {
             type: "result",
             data: {
                 result,
-                dtime: performance.now() - t0
+                t0
             }
         });
     }
