@@ -24,7 +24,7 @@ worker.postMessage({ type: "init" });
 
 const sketch = (sk: p5) => {
     sk.setup = () => {
-        sk.createCanvas(640, 480, canvasEl); 
+        sk.createCanvas(sk.windowWidth - 16, sk.windowHeight - 16, canvasEl); 
         sk.frameRate(60);
         vidSrc = sk.createCapture(sk.VIDEO) as p5.MediaElement<HTMLVideoElement>;
         vidSrc.elt.onloadeddata = recoginzeGestures;
@@ -32,17 +32,31 @@ const sketch = (sk: p5) => {
     
     sk.draw = () => {
         let t0 = performance.now();
-        sk.background(200);
-        sk.fill(255, 0, 0);
+        sk.clear();
+        sk.fill(47, 79, 79);
         sk.text(results.getGesture(), 10, 30);
         let handposition = results.getExtrapolatedHandPosition();
         if (handposition) {
             sk.ellipse(sk.width * (1 - handposition.x), sk.height * handposition.y, 10, 10);
+            vidSrc?.hide();
+            sk.line(sk.width * (1 - handposition.x), 0, sk.width * (1 - handposition.x), sk.height);
+            sk.line(0, handposition.y * sk.height, sk.width, handposition.y * sk.height);   
         }
+        else vidSrc?.show();
         sk.text("framerate: " + sk.frameRate().toFixed(1) + " fps", 10, 50);
         sk.text("video processing time: " + vidProcessingTime.toFixed(1).padStart(4, '0') + " ms", 10, 60);
         sk.text("draw time: " + (performance.now() - t0).toFixed(1).padStart(4, '0')+ " ms", 10, 70);
     };
+
+    sk.keyPressed = () => {
+        if (sk.key === 'f') {
+            sk.fullscreen(!sk.fullscreen());
+        }
+    }
+
+    sk.windowResized = () => {
+        sk.resizeCanvas(sk.windowWidth - 16, sk.windowHeight - 16);
+    }
 };
 new p5(sketch);
 
