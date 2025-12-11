@@ -1,5 +1,6 @@
 import p5 from 'p5';
 import { ResultsHandler } from './resultshandler';
+import { Interactable, DraggableEllipse } from './interactable';
 
 let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
@@ -23,18 +24,21 @@ worker.onmessage = (e) => {
 worker.postMessage({ type: "init" });
 
 const sketch = (sk: p5) => {
+    let interactables: Interactable[] = [];
+
     sk.setup = () => {
         sk.createCanvas(sk.windowWidth - 16, sk.windowHeight - 16, canvasEl); 
         sk.frameRate(60);
         vidSrc = sk.createCapture(sk.VIDEO) as p5.MediaElement<HTMLVideoElement>;
         vidSrc.elt.onloadeddata = recoginzeGestures;
+
+        interactables.push(new DraggableEllipse(sk, { x: 0.3, y: 0.3 }, 100));
     };
     
     sk.draw = () => {
         let t0 = performance.now();
         sk.clear();
         sk.fill(47, 79, 79);
-        sk.text(results.getGesture(), 10, 30);
         let handposition = results.getExtrapolatedHandPosition();
         if (handposition) {
             sk.ellipse(sk.width * (1 - handposition.x), sk.height * handposition.y, 10, 10);
@@ -43,6 +47,13 @@ const sketch = (sk: p5) => {
             sk.line(0, handposition.y * sk.height, sk.width, handposition.y * sk.height);   
         }
         else vidSrc?.show();
+
+        for (let interactable of interactables) { 
+            if (handposition) interactable.evaluate(results.getGesture(), handposition!);
+            interactable.draw();
+        }
+
+        sk.text(results.getGesture(), 10, 30);
         sk.text("framerate: " + sk.frameRate().toFixed(1) + " fps", 10, 50);
         sk.text("video processing time: " + vidProcessingTime.toFixed(1).padStart(4, '0') + " ms", 10, 60);
         sk.text("draw time: " + (performance.now() - t0).toFixed(1).padStart(4, '0')+ " ms", 10, 70);
