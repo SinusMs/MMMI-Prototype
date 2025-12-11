@@ -1,25 +1,27 @@
-import { GestureRecognizer, FilesetResolver, GestureRecognizerResult } from '@mediapipe/tasks-vision';
 import p5 from 'p5';
 import { ResultsHandler } from './resultshandler';
-
-// Create task for image file processing:
-const vision = await FilesetResolver.forVisionTasks(
-    "mediapipe/wasm"
-);
-const gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
-    baseOptions: {
-        modelAssetPath: "mediapipe/gesture_recognizer.task",
-        delegate: "GPU"
-    },
-    numHands: 2,
-    runningMode: 'VIDEO',
-});
 
 let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
 let results: ResultsHandler = new ResultsHandler();
 let recTime: number = -1;
+let bmpTime: number = -1;
 
+const worker = new Worker(new URL('./gesture-worker.js', import.meta.url));
+worker.onmessage = (e) => {
+    const { type, data } = e.data;
+    switch (type) {
+        case "init-done":
+            break;
+        case "result":
+            results.addResult(data.result, performance.now());
+            recTime = data.dtime;
+            break;
+        default:
+            console.warn("Unknown message type from worker: ", type), e.data;
+    }
+};
+worker.postMessage({ type: "init" });
 
 const sketch = (sk: p5) => {
     sk.setup = () => {
@@ -39,18 +41,29 @@ const sketch = (sk: p5) => {
                 sk.ellipse(sk.width * (1 - handPosition.x), sk.height * handPosition.y, 50, 50);
             sk.text(results.getGesture(), 10, 30);
         }
-        sk.text("recognize time: " + recTime.toFixed(1).padStart(4, '0') + " ms", 10, 50);
-        sk.text("draw time: " + (performance.now() - t0).toFixed(1).padStart(4, '0')+ " ms", 10, 60);
-        sk.text("framerate: " + sk.frameRate().toFixed(1) + " fps", 10, 70);
+        sk.text("framerate: " + sk.frameRate().toFixed(1) + " fps", 10, 50);
+        sk.text("recognize time: " + recTime.toFixed(1).padStart(4, '0') + " ms", 10, 60);
+        sk.text("draw time: " + (performance.now() - t0).toFixed(1).padStart(4, '0')+ " ms", 10, 70);
+        sk.text("bitmap time: " + bmpTime.toFixed(1).padStart(4, '0')+ " ms", 10, 80);
     };
 };
 new p5(sketch);
 
 function recoginzeGestures() {
     if (!vidSrc) return;
-    let t0 = performance.now()
-    let res = gestureRecognizer.recognizeForVideo(vidSrc.elt, t0);
-    results.addResult(res, t0);
-    recTime = performance.now() - t0;
-    vidSrc.elt.requestVideoFrameCallback(recoginzeGestures);
+    const t0 = performance.now();
+    const bitmap = createImageBitmap(vidSrc.elt);
+    bitmap.then((bmp) => {
+        worker.postMessage(
+            {
+                type: "frame",
+                data: {
+                    bitmap: bmp,
+                }
+            },
+            [bmp]
+        );
+        bmpTime = performance.now() - t0;
+        vidSrc!.elt.requestVideoFrameCallback(recoginzeGestures);
+    });
 }
