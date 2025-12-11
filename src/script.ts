@@ -25,6 +25,7 @@ worker.postMessage({ type: "init" });
 const sketch = (sk: p5) => {
     sk.setup = () => {
         sk.createCanvas(640, 480, canvasEl); 
+        sk.frameRate(60);
         vidSrc = sk.createCapture(sk.VIDEO) as p5.MediaElement<HTMLVideoElement>;
         vidSrc.elt.onloadeddata = recoginzeGestures;
     };
@@ -33,12 +34,10 @@ const sketch = (sk: p5) => {
         let t0 = performance.now();
         sk.background(200);
         sk.fill(255, 0, 0);
-        let result = results.getLatestResult();
-        if (result) {
-            let handPosition = result.handposition;
-            if (handPosition)
-                sk.ellipse(sk.width * (1 - handPosition.x), sk.height * handPosition.y, 50, 50);
-            sk.text(results.getGesture(), 10, 30);
+        sk.text(results.getGesture(), 10, 30);
+        let handposition = results.getExtrapolatedHandPosition();
+        if (handposition) {
+            sk.ellipse(sk.width * (1 - handposition.x), sk.height * handposition.y, 10, 10);
         }
         sk.text("framerate: " + sk.frameRate().toFixed(1) + " fps", 10, 50);
         sk.text("video processing time: " + vidProcessingTime.toFixed(1).padStart(4, '0') + " ms", 10, 60);
