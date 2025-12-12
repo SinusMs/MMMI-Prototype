@@ -6,6 +6,12 @@ export type Vector2 = {
 }
 
 const MAX_BUFFER_SIZE = 3;
+
+// Cap acceleration to prevent overshoot (normalized coordinates per ms²)
+// More aggressive: 0.00001 (allows more prediction)
+// Very conservative: 0.000002 (minimal overshoot risk)
+const MAX_ACCELERATION = 0.000003; 
+
 export class ResultsHandler {
     private buffer: { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null }[] = [];
 
@@ -68,8 +74,16 @@ export class ResultsHandler {
         const v2y = (p2.y - p1.y) / dt2;
         
         // Calculate acceleration (change in velocity)
-        const ax = (v2x - v1x) / ((dt1 + dt2) / 2);
-        const ay = (v2y - v1y) / ((dt1 + dt2) / 2);
+        let ax = (v2x - v1x) / ((dt1 + dt2) / 2);
+        let ay = (v2y - v1y) / ((dt1 + dt2) / 2);
+        
+        // Cap acceleration to prevent overshoot
+        const accelMag = Math.sqrt(ax * ax + ay * ay);
+        if (accelMag > MAX_ACCELERATION) {
+            const scale = MAX_ACCELERATION / accelMag;
+            ax *= scale;
+            ay *= scale;
+        }
         
         // Extrapolate to current time using position, velocity, and acceleration
         const extrapolationTime = performance.now() - t2;
