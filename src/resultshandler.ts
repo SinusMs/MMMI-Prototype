@@ -91,6 +91,10 @@ export class ResultsHandler {
 
     public addResult(result: GestureRecognizerResult, timestamp: number): void {
         let handposition = this.calcHandPosition(result);
+        if (!handposition) {
+            this.buffer = [];
+            return;
+        }
         this.buffer.push({ result, timestamp, handposition }); 
         if (this.buffer.length > MAX_BUFFER_SIZE) {
             this.buffer.shift();
@@ -98,12 +102,19 @@ export class ResultsHandler {
     }
 
     private calcHandPosition(result: GestureRecognizerResult): Vector2 | null {
-        const pts = result.landmarks[0];
-        if (!pts) return null;
+        const pts = [
+            result.landmarks?.at(0)?.at(0),
+            result.landmarks?.at(0)?.at(1),
+            result.landmarks?.at(0)?.at(5),
+            result.landmarks?.at(0)?.at(9),
+            result.landmarks?.at(0)?.at(17),
+            result.landmarks?.at(0)?.at(13)
+        ];
         let x = 0, y = 0;
         for (let i = 0; i < pts.length; i++) {
-            x += pts[i].x;
-            y += pts[i].y;
+            if (!pts[i]) return null;
+            x += pts[i]!.x;
+            y += pts[i]!.y;
         }
         const n = pts.length;
         return { x: x / n, y: y / n };
