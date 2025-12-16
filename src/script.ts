@@ -1,6 +1,6 @@
 import p5 from 'p5';
 import { ResultsHandler } from './resultshandler';
-import { Interactable, DraggableEllipse } from './interactable';
+import { Interactable, DraggableEllipse, Slider } from './interactable';
 
 let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
@@ -33,6 +33,7 @@ const sketch = (sk: p5) => {
         vidSrc.elt.onloadeddata = recoginzeGestures;
 
         interactables.push(new DraggableEllipse(sk, { x: 0.3, y: 0.3 }, 100));
+        interactables.push(new Slider(sk, { x: sk.width - 500, y: sk.height - 100 }, { x: sk.width - 500, y: sk.height - (sk.height - 100) }, 0.5));
     };
     
     sk.draw = () => {
@@ -57,6 +58,7 @@ const sketch = (sk: p5) => {
         sk.text("framerate: " + sk.frameRate().toFixed(1) + " fps", 10, 50);
         sk.text("video processing time: " + vidProcessingTime.toFixed(1).padStart(4, '0') + " ms", 10, 60);
         sk.text("draw time: " + (performance.now() - t0).toFixed(1).padStart(4, '0')+ " ms", 10, 70);
+        sk.text("hand position: " + (handposition ? `(${(handposition.x * sk.width).toFixed(0)}, ${(handposition.y * sk.height).toFixed(0)})` : "N/A"), 10, 80);
     };
 
     sk.keyPressed = () => {
