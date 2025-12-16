@@ -1,6 +1,6 @@
 import p5 from 'p5';
 import { ResultsHandler } from './resultshandler';
-import { Interactable, DraggableEllipse, Slider, Button } from './interactable';
+import { Interactable, DraggableEllipse, Slider, Button, Wheel } from './interactable';
 
 let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
@@ -32,9 +32,10 @@ const sketch = (sk: p5) => {
         vidSrc = sk.createCapture(sk.VIDEO) as p5.MediaElement<HTMLVideoElement>;
         vidSrc.elt.onloadeddata = recoginzeGestures;
 
-        interactables.push(new DraggableEllipse(sk, { x: 0.3, y: 0.3 }, 100));
+        interactables.push(new DraggableEllipse(sk, { x: 0.1, y: 0.3 }, 100));
         interactables.push(new Slider(sk, { x: sk.width - 500, y: sk.height - 100 }, { x: sk.width - 500, y: sk.height - (sk.height - 100) }, 0.5));
         interactables.push(new Button(sk, { x: 200, y: 200 }, 80));
+        interactables.push(new Wheel(sk, { x: 1000, y: 500 },200,260, 0.25));
     };
     
     sk.draw = () => {

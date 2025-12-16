@@ -144,3 +144,80 @@ export class Button extends Interactable {
         this.sk.circle(this.position.x, this.position.y, this.radius * 2);
     }
 }
+
+export class Wheel extends Interactable {
+    position: Vector2;
+    innerRadius: number;
+    outerRadius: number;
+    fill: number;
+    private grabStartAngle: number | null = null;
+    private grabStartFill: number = 0;
+
+    constructor(sk: p5, position: Vector2, innerRadius: number, outerRadius: number, fill: number = 0.5) {
+        super(sk);
+        this.position = position;
+        this.innerRadius = innerRadius;
+        this.outerRadius = outerRadius;
+        this.fill = fill;
+    }
+
+    evaluate(gesture: string, handposition: Vector2): void {
+        const handScreenPos = this.handToScreenSpace(handposition);
+        const distFromCenter = dist(this.position, handScreenPos);
+        const overlapping = distFromCenter >= this.innerRadius && distFromCenter <= this.outerRadius;
+        
+        this.hovering = overlapping;
+        
+        const calculateAngle = (pos: Vector2) => {
+            let angle = Math.atan2(pos.x - this.position.x, -(pos.y - this.position.y));
+            return angle < 0 ? angle + 2 * Math.PI : angle;
+        };
+        
+        if (gesture == "Closed_Fist") {
+            if (!this.grabbed && overlapping) {
+                this.grabStartAngle = calculateAngle(handScreenPos);
+                this.grabStartFill = this.fill;
+                this.grabbed = true;
+            }
+            
+            if (this.grabbed && this.grabStartAngle !== null) {
+                let angleDiff = calculateAngle(handScreenPos) - this.grabStartAngle;
+                if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                
+                const targetFill = Math.max(0, Math.min(1, this.grabStartFill + angleDiff / (2 * Math.PI)));
+                this.fill = lerpScalar(this.fill, targetFill, this.drag);
+            }
+        } else {
+            this.grabbed = false;
+            this.grabStartAngle = null;
+        }
+    }
+
+    draw(): void {
+        this.sk.push();
+        // Draw the ring
+        this.sk.noFill();
+        this.sk.strokeWeight(this.outerRadius - this.innerRadius);
+        this.sk.circle(this.position.x, this.position.y, (this.innerRadius + ((this.outerRadius - this.innerRadius) / 2)) * 2);
+        
+        // Draw the knob to show rotation
+        const knobRadius = (this.outerRadius - this.innerRadius) / 2;
+        const knobDistance = (this.innerRadius + this.outerRadius) / 2;
+        
+        // Calculate knob position based on fill (0 = top, increases clockwise)
+        const angle = this.fill * 2 * Math.PI;
+        const knobX = this.position.x + Math.sin(angle) * knobDistance;
+        const knobY = this.position.y - Math.cos(angle) * knobDistance;
+        
+        this.sk.fill(150);
+        if (this.hovering) {
+            this.sk.strokeWeight(3);
+        } else {
+            this.sk.strokeWeight(1);
+        }
+        this.sk.circle(knobX, knobY, knobRadius * 2);
+        this.sk.pop();
+    }
+
+}
