@@ -1,20 +1,5 @@
-import { Vector2 } from "./resultshandler";
 import p5 from "p5";
-
-function dist(p1: Vector2, p2: Vector2): number {
-    return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
-}
-
-function lerp(a: Vector2, b: Vector2, t: number): Vector2 {
-    return {
-        x: a.x + (b.x - a.x) * t,
-        y: a.y + (b.y - a.y) * t
-    };
-}
-
-function lerpScalar(a: number, b: number, t: number): number {
-    return a + (b - a) * t;
-}
+import { Vector2, lerp, lerpScalar, dist } from "./utils.ts";
 
 export abstract class Interactable {
     sk: p5;
@@ -29,7 +14,7 @@ export abstract class Interactable {
     abstract evaluate(gesture: string, handposition: Vector2): void;
     abstract draw(): void;
 
-    normalizedToScreenPos(normalizedPos: { x: number, y: number }): Vector2 {
+    handToScreenSpace(normalizedPos: { x: number, y: number }): Vector2 {
         return {
             x: this.sk.width * (1 - normalizedPos.x),
             y: normalizedPos.y * this.sk.height
@@ -49,7 +34,7 @@ export class DraggableEllipse extends Interactable {
 
     evaluate(gesture: string, handposition: Vector2): void {
         let overlapping: boolean = 
-            dist(this.normalizedToScreenPos(this.position), this.normalizedToScreenPos(handposition)) <= this.radius;
+            dist(this.handToScreenSpace(this.position), this.handToScreenSpace(handposition)) <= this.radius;
         if (gesture == "Closed_Fist") {
             if (overlapping) this.grabbed = true;
         } else {
@@ -85,7 +70,7 @@ export class Slider extends Interactable {
     }
 
     evaluate(gesture: string, handposition: Vector2): void {
-        const handScreenPos = this.normalizedToScreenPos(handposition);
+        const handScreenPos = this.handToScreenSpace(handposition);
         let overlapping: boolean = 
             dist(this.knobPos(), handScreenPos) <= this.knobRadius;
         if (gesture == "Closed_Fist") {

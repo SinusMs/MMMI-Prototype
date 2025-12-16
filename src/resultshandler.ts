@@ -1,9 +1,5 @@
 import { GestureRecognizerResult } from '@mediapipe/tasks-vision';
-
-export type Vector2 = {
-    x: number,
-    y: number
-}
+import { Vector2 } from './utils.ts';
 
 const MAX_BUFFER_SIZE = 3;
 
