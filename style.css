@@ -17,13 +17,14 @@ canvas {
 
 video {
     position: fixed;
-    width: calc(100vw - 16px);
-    height: calc(100vh - 16px);
+    top: 50%;
+    left: 50%;
+    width: calc(1920px - 16px);
+    height: calc(1080px - 16px);
     border-radius: 10px;
-    margin: 8px;
     z-index: 100;
-    transform: rotateY(180deg);
-    -webkit-transform:rotateY(180deg); 
-    -moz-transform:rotateY(180deg); 
+    transform: translate(-50%, -50%) rotateY(180deg);
+    -webkit-transform: translate(-50%, -50%) rotateY(180deg); 
+    -moz-transform: translate(-50%, -50%) rotateY(180deg); 
     opacity: 0.1;
 }

@@ -27,7 +27,7 @@ const sketch = (sk: p5) => {
     let interactables: Interactable[] = [];
 
     sk.setup = () => {
-        sk.createCanvas(sk.windowWidth - 16, sk.windowHeight - 16, canvasEl); 
+        sk.createCanvas(1920 - 16, 1080 - 16, canvasEl); 
         sk.frameRate(60);
         vidSrc = sk.createCapture(sk.VIDEO) as p5.MediaElement<HTMLVideoElement>;
         vidSrc.elt.onloadeddata = recoginzeGestures;
@@ -63,10 +63,6 @@ const sketch = (sk: p5) => {
         if (sk.key === 'f') {
             sk.fullscreen(!sk.fullscreen());
         }
-    }
-
-    sk.windowResized = () => {
-        sk.resizeCanvas(sk.windowWidth - 16, sk.windowHeight - 16);
     }
 };
 new p5(sketch);
