@@ -1,6 +1,6 @@
 import p5 from 'p5';
 import { ResultsHandler } from './resultshandler';
-import { Interactable, DraggableEllipse, Slider } from './interactable';
+import { Interactable, DraggableEllipse, Slider, Button } from './interactable';
 
 let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
@@ -34,6 +34,7 @@ const sketch = (sk: p5) => {
 
         interactables.push(new DraggableEllipse(sk, { x: 0.3, y: 0.3 }, 100));
         interactables.push(new Slider(sk, { x: sk.width - 500, y: sk.height - 100 }, { x: sk.width - 500, y: sk.height - (sk.height - 100) }, 0.5));
+        interactables.push(new Button(sk, { x: 200, y: 200 }, 80));
     };
     
     sk.draw = () => {
@@ -52,6 +53,7 @@ const sketch = (sk: p5) => {
         for (let interactable of interactables) { 
             if (handposition) interactable.evaluate(results.getGesture(), handposition!);
             interactable.draw();
+            sk.fill(47, 79, 79);
         }
 
         sk.text(results.getGesture(), 10, 30);

@@ -104,3 +104,43 @@ export class Slider extends Interactable {
         this.sk.circle(this.knobPos().x, this.knobPos().y, this.knobRadius * 2);
     }
 }
+
+
+export class Button extends Interactable {
+    position: Vector2;
+    radius: number;
+    toggled: boolean = false;
+    private wasGrabbed: boolean = false;
+
+    constructor(sk: p5, position: Vector2, radius: number) {
+        super(sk);
+        this.position = position;
+        this.radius = radius;
+    }
+
+    evaluate(gesture: string, handposition: Vector2): void {
+        let overlapping: boolean = dist(this.position, this.handToScreenSpace(handposition)) <= this.radius;
+        
+        if (gesture == "Closed_Fist") {
+            if (overlapping && !this.wasGrabbed) {
+                this.toggled = !this.toggled;
+                this.wasGrabbed = true;
+            }
+            this.grabbed = overlapping;
+        } else {
+            this.grabbed = false;
+            this.wasGrabbed = false;
+        }
+        this.hovering = overlapping;
+    }
+
+    draw(): void {
+        if (this.toggled) {
+            this.sk.fill(100, 200, 100); 
+        } else {
+            this.sk.fill(200, 100, 100); 
+        }
+        
+        this.sk.circle(this.position.x, this.position.y, this.radius * 2);
+    }
+}
