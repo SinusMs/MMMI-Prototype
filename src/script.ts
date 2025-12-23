@@ -7,6 +7,7 @@ let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
 let results: ResultsHandler = new ResultsHandler();
 let vidProcessingTime: number = -1;
+let recognizeTime: number = -1;
 
 const worker = new Worker(new URL('./gesture-worker.js', import.meta.url));
 worker.onmessage = (e) => {
@@ -17,6 +18,10 @@ worker.onmessage = (e) => {
         case "result":
             results.addResult(data.result, performance.now());
             vidProcessingTime = performance.now() - data.t0;
+            recognizeTime = data.recognizeTime;
+            if (vidSrc) {
+                vidSrc!.elt.requestVideoFrameCallback(recoginzeGestures);
+            }
             break;
         default:
             console.warn("Unknown message type from worker: ", type), e.data;
@@ -69,9 +74,10 @@ const sketch = (sk: p5) => {
 
         sk.text(results.getGesture(), 10, 30);
         sk.text("framerate: " + sk.frameRate().toFixed(1) + " fps", 10, 50);
-        sk.text("video processing time: " + vidProcessingTime.toFixed(1).padStart(4, '0') + " ms", 10, 60);
-        sk.text("draw time: " + (performance.now() - t0).toFixed(1).padStart(4, '0')+ " ms", 10, 70);
-        sk.text("hand position: " + (handposition ? `(${(handposition.x * sk.width).toFixed(0)}, ${(handposition.y * sk.height).toFixed(0)})` : "N/A"), 10, 80);
+        sk.text("total video processing time: " + vidProcessingTime.toFixed(1).padStart(4, '0') + " ms", 10, 60);
+        sk.text("recognize time: " + recognizeTime.toFixed(1).padStart(4, '0') + " ms", 10, 70);
+        sk.text("draw time: " + (performance.now() - t0).toFixed(1).padStart(4, '0')+ " ms", 10, 80);
+        sk.text("hand position: " + (handposition ? `(${(handposition.x * sk.width).toFixed(0)}, ${(handposition.y * sk.height).toFixed(0)})` : "N/A"), 10, 90);
     };
 
     sk.keyPressed = () => {
@@ -97,6 +103,5 @@ function recoginzeGestures() {
             },
             [bmp]
         );
-        vidSrc!.elt.requestVideoFrameCallback(recoginzeGestures);
     });
 }
