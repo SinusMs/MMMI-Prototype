@@ -1,6 +1,7 @@
 import p5 from 'p5';
 import { ResultsHandler } from './resultshandler';
 import { Interactable, DraggableEllipse, Slider, Button, Wheel } from './interactable';
+import * as Audio from './audioManager'
 
 let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
@@ -25,6 +26,15 @@ worker.postMessage({ type: "init" });
 
 const sketch = (sk: p5) => {
     let interactables: Interactable[] = [];
+
+    sk.mousePressed = async () => {
+        await Audio.initAudio();
+        Audio.startLoop();
+        Audio.setLoopVolume(0, 0.1);
+        Audio.setLoopVolume(1, 0.1);
+        Audio.setLoopVolume(2, 0.1);
+        Audio.setLoopVolume(3, 0.1);
+    }
 
     sk.setup = () => {
         sk.createCanvas(1920 - 16, 1080 - 16, canvasEl); 
