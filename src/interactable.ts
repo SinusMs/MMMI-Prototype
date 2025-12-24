@@ -150,15 +150,20 @@ export class Wheel extends Interactable {
     innerRadius: number;
     outerRadius: number;
     fill: number;
-    private grabStartAngle: number | null = null;
+    start: number;
+    end: number;
+    private lastAngle: number | null = null;
     private grabStartFill: number = 0;
+    private accumulatedRotation: number = 0;
 
-    constructor(sk: p5, position: Vector2, innerRadius: number, outerRadius: number, fill: number = 0.5) {
+    constructor(sk: p5, position: Vector2, innerRadius: number, outerRadius: number, fill: number = 0.5, start: number = 0, end: number = 2 * Math.PI) {
         super(sk);
         this.position = position;
         this.innerRadius = innerRadius;
         this.outerRadius = outerRadius;
         this.fill = fill;
+        this.start = start;
+        this.end = end;
     }
 
     evaluate(gesture: string, handposition: Vector2): void {
@@ -175,22 +180,30 @@ export class Wheel extends Interactable {
         
         if (gesture == "Closed_Fist") {
             if (!this.grabbed && overlapping) {
-                this.grabStartAngle = calculateAngle(handScreenPos);
-                this.grabStartFill = this.fill;
                 this.grabbed = true;
+                this.lastAngle = calculateAngle(handScreenPos);
+                this.grabStartFill = this.fill;
+                this.accumulatedRotation = 0;
             }
             
-            if (this.grabbed && this.grabStartAngle !== null) {
-                let angleDiff = calculateAngle(handScreenPos) - this.grabStartAngle;
+            if (this.grabbed && this.lastAngle !== null) {
+                const currentAngle = calculateAngle(handScreenPos);
+                let angleDiff = currentAngle - this.lastAngle;
+                
+                // Normalize to shortest path for this frame only
                 if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
                 if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
                 
-                const targetFill = Math.max(0, Math.min(1, this.grabStartFill + angleDiff / (2 * Math.PI)));
+                // Accumulate rotation to allow continuous rotation beyond 180°
+                this.accumulatedRotation += angleDiff;
+                this.lastAngle = currentAngle;
+                
+                const targetFill = Math.max(0, Math.min(1, this.grabStartFill + this.accumulatedRotation / (this.end - this.start)));
                 this.fill = lerpScalar(this.fill, targetFill, this.drag);
             }
         } else {
             this.grabbed = false;
-            this.grabStartAngle = null;
+            this.lastAngle = null;
         }
     }
 
@@ -205,8 +218,8 @@ export class Wheel extends Interactable {
         const knobRadius = (this.outerRadius - this.innerRadius) / 2;
         const knobDistance = (this.innerRadius + this.outerRadius) / 2;
         
-        // Calculate knob position based on fill (0 = top, increases clockwise)
-        const angle = this.fill * 2 * Math.PI;
+        // Calculate knob position based on fill, mapped to [start, end] range
+        const angle = this.start + this.fill * (this.end - this.start);
         const knobX = this.position.x + Math.sin(angle) * knobDistance;
         const knobY = this.position.y - Math.cos(angle) * knobDistance;
         
