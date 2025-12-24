@@ -2,6 +2,7 @@ import p5 from 'p5';
 import { ResultsHandler } from './resultshandler';
 import { Interactable, DraggableEllipse, Slider, Button, Wheel } from './interactable';
 import * as Audio from './audioManager'
+import { handToScreenSpace } from './utils';
 
 let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
@@ -31,6 +32,7 @@ worker.postMessage({ type: "init" });
 
 const sketch = (sk: p5) => {
     let interactables: Interactable[] = [];
+    let textGraphics: p5.Graphics;
 
     sk.mousePressed = async () => {
         await Audio.initAudio();
@@ -42,7 +44,13 @@ const sketch = (sk: p5) => {
     }
 
     sk.setup = () => {
-        sk.createCanvas(1920 - 16, 1080 - 16, canvasEl); 
+        sk.createCanvas(1920 - 16, 1080 - 16, sk.WEBGL, canvasEl); 
+        sk.setAttributes({ antialias: true });
+        
+        textGraphics = sk.createGraphics(1920 - 16, 1080 - 16);
+        textGraphics.textSize(16);
+        textGraphics.fill(47, 79, 79);
+        
         sk.frameRate(60);
         vidSrc = sk.createCapture(sk.VIDEO) as p5.MediaElement<HTMLVideoElement>;
         vidSrc.elt.onloadeddata = recoginzeGestures;
@@ -56,13 +64,18 @@ const sketch = (sk: p5) => {
     sk.draw = () => {
         let t0 = performance.now();
         sk.clear();
+
+        // Transform origin to top-left corner (like p5's 2D mode)
+        sk.translate(-sk.width / 2, -sk.height / 2);
+        
         sk.fill(47, 79, 79);
         let handposition = results.getExtrapolatedHandPosition();
         if (handposition) {
-            sk.ellipse(sk.width * (1 - handposition.x), sk.height * handposition.y, 10, 10);
+            const handScreenPos = handToScreenSpace(handposition, sk);
+            sk.ellipse(handScreenPos.x, handScreenPos.y, 10, 10);
             vidSrc?.hide();
-            sk.line(sk.width * (1 - handposition.x), 0, sk.width * (1 - handposition.x), sk.height);
-            sk.line(0, handposition.y * sk.height, sk.width, handposition.y * sk.height);   
+            sk.line(handScreenPos.x, 0, handScreenPos.x, sk.height);
+            sk.line(0, handScreenPos.y, sk.width, handScreenPos.y);   
         }
         else vidSrc?.show();
 
@@ -72,12 +85,21 @@ const sketch = (sk: p5) => {
             sk.fill(47, 79, 79);
         }
 
-        sk.text(results.getGesture(), 10, 30);
-        sk.text("framerate: " + sk.frameRate().toFixed(1) + " fps", 10, 50);
-        sk.text("total video processing time: " + vidProcessingTime.toFixed(1).padStart(4, '0') + " ms", 10, 60);
-        sk.text("recognize time: " + recognizeTime.toFixed(1).padStart(4, '0') + " ms", 10, 70);
-        sk.text("draw time: " + (performance.now() - t0).toFixed(1).padStart(4, '0')+ " ms", 10, 80);
-        sk.text("hand position: " + (handposition ? `(${(handposition.x * sk.width).toFixed(0)}, ${(handposition.y * sk.height).toFixed(0)})` : "N/A"), 10, 90);
+        textGraphics.clear();
+        textGraphics.fill(47, 79, 79);
+        textGraphics.text(results.getGesture(), 10, 30);
+        textGraphics.text("framerate: " + sk.frameRate().toFixed(1) + " fps", 10, 50);
+        textGraphics.text("total video processing time: " + vidProcessingTime.toFixed(1).padStart(4, '0') + " ms", 10, 70);
+        textGraphics.text("recognize time: " + recognizeTime.toFixed(1).padStart(4, '0') + " ms", 10, 90);
+        textGraphics.text("draw time: " + (performance.now() - t0).toFixed(1).padStart(4, '0')+ " ms", 10, 110);
+        textGraphics.text("hand position: " + (handposition ? `(${handToScreenSpace(handposition, sk).x.toFixed(0)}, ${handToScreenSpace(handposition, sk).y.toFixed(0)})` : "N/A"), 10, 130);
+        
+        sk.push();
+        sk.resetMatrix();
+        sk.texture(textGraphics);
+        sk.noStroke();
+        sk.plane(sk.width, sk.height);
+        sk.pop();
     };
 
     sk.keyPressed = () => {

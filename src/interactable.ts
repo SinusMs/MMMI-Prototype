@@ -1,5 +1,5 @@
 import p5 from "p5";
-import { Vector2, lerp, lerpScalar, dist } from "./utils.ts";
+import { Vector2, lerp, lerpScalar, dist, handToScreenSpace } from "./utils.ts";
 
 export abstract class Interactable {
     sk: p5;
@@ -13,13 +13,6 @@ export abstract class Interactable {
 
     abstract evaluate(gesture: string, handposition: Vector2): void;
     abstract draw(): void;
-
-    handToScreenSpace(normalizedPos: { x: number, y: number }): Vector2 {
-        return {
-            x: this.sk.width * (1 - normalizedPos.x),
-            y: normalizedPos.y * this.sk.height
-        };
-    }
 }
 
 export class DraggableEllipse extends Interactable {
@@ -34,7 +27,7 @@ export class DraggableEllipse extends Interactable {
 
     evaluate(gesture: string, handposition: Vector2): void {
         let overlapping: boolean = 
-            dist(this.handToScreenSpace(this.position), this.handToScreenSpace(handposition)) <= this.radius;
+            dist(handToScreenSpace(this.position, this.sk), handToScreenSpace(handposition, this.sk)) <= this.radius;
         if (gesture == "Closed_Fist") {
             if (overlapping) this.grabbed = true;
         } else {
@@ -70,7 +63,7 @@ export class Slider extends Interactable {
     }
 
     evaluate(gesture: string, handposition: Vector2): void {
-        const handScreenPos = this.handToScreenSpace(handposition);
+        const handScreenPos = handToScreenSpace(handposition, this.sk);
         let overlapping: boolean = 
             dist(this.knobPos(), handScreenPos) <= this.knobRadius;
         if (gesture == "Closed_Fist") {
@@ -119,7 +112,7 @@ export class Button extends Interactable {
     }
 
     evaluate(gesture: string, handposition: Vector2): void {
-        let overlapping: boolean = dist(this.position, this.handToScreenSpace(handposition)) <= this.radius;
+        let overlapping: boolean = dist(this.position, handToScreenSpace(handposition, this.sk)) <= this.radius;
         
         if (gesture == "Closed_Fist") {
             if (overlapping && !this.wasGrabbed) {
@@ -167,7 +160,7 @@ export class Wheel extends Interactable {
     }
 
     evaluate(gesture: string, handposition: Vector2): void {
-        const handScreenPos = this.handToScreenSpace(handposition);
+        const handScreenPos = handToScreenSpace(handposition, this.sk);
         const distFromCenter = dist(this.position, handScreenPos);
         const overlapping = distFromCenter >= this.innerRadius && distFromCenter <= this.outerRadius;
         
@@ -212,8 +205,8 @@ export class Wheel extends Interactable {
         // Draw the ring
         this.sk.noFill();
         this.sk.strokeWeight(this.outerRadius - this.innerRadius);
-        this.sk.circle(this.position.x, this.position.y, (this.innerRadius + ((this.outerRadius - this.innerRadius) / 2)) * 2);
-        
+        this.sk.ellipse(this.position.x, this.position.y, (this.innerRadius + ((this.outerRadius - this.innerRadius) / 2)) * 2, (this.innerRadius + ((this.outerRadius - this.innerRadius) / 2)) * 2, 50);
+    
         // Draw the knob to show rotation
         const knobRadius = (this.outerRadius - this.innerRadius) / 2;
         const knobDistance = (this.innerRadius + this.outerRadius) / 2;
