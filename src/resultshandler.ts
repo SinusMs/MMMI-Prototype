@@ -7,9 +7,17 @@ const MAX_BUFFER_SIZE = 3;
 // More aggressive: 0.00001 (allows more prediction)
 // Very conservative: 0.000002 (minimal overshoot risk)
 const MAX_ACCELERATION = 0.000003; 
+const SKETCH_SIZE: Vector2 = { x: 1920 - 16, y: 1080 - 16 };
 
 export class ResultsHandler {
     private buffer: { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null }[] = [];
+
+    private handToScreenSpace(normalizedPos: { x: number, y: number }): Vector2 {
+        return {
+            x: SKETCH_SIZE.x * (1 - normalizedPos.x),
+            y: normalizedPos.y * SKETCH_SIZE.y
+        };
+    }
 
     public getBuffer(): { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null }[] {
         return this.buffer;
@@ -84,10 +92,12 @@ export class ResultsHandler {
         // Extrapolate to current time using position, velocity, and acceleration
         const extrapolationTime = performance.now() - t2;
         
-        return {
+        let normalizedPos: Vector2 = {
             x: p2.x + v2x * extrapolationTime + 0.5 * ax * extrapolationTime * extrapolationTime,
             y: p2.y + v2y * extrapolationTime + 0.5 * ay * extrapolationTime * extrapolationTime
         };
+
+        return this.handToScreenSpace(normalizedPos);
     }
 
     public getLatestResult(): { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null } | null { 

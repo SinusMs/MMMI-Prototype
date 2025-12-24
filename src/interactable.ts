@@ -1,5 +1,5 @@
 import p5 from "p5";
-import { Vector2, lerp, lerpScalar, dist, handToScreenSpace } from "./utils.ts";
+import { Vector2, lerp, lerpScalar, dist } from "./utils.ts";
 
 export abstract class Interactable {
     sk: p5;
@@ -27,7 +27,7 @@ export class DraggableEllipse extends Interactable {
 
     evaluate(gesture: string, handposition: Vector2): void {
         let overlapping: boolean = 
-            dist(handToScreenSpace(this.position, this.sk), handToScreenSpace(handposition, this.sk)) <= this.radius;
+            dist(this.position, handposition) <= this.radius;
         if (gesture == "Closed_Fist") {
             if (overlapping) this.grabbed = true;
         } else {
@@ -41,7 +41,7 @@ export class DraggableEllipse extends Interactable {
     }
 
     draw(): void {
-        this.sk.ellipse(this.sk.width * (1 - this.position.x), this.sk.height * this.position.y, this.radius * 2, this.radius * 2);
+        this.sk.ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2);
     }
 }
 
@@ -63,9 +63,8 @@ export class Slider extends Interactable {
     }
 
     evaluate(gesture: string, handposition: Vector2): void {
-        const handScreenPos = handToScreenSpace(handposition, this.sk);
         let overlapping: boolean = 
-            dist(this.knobPos(), handScreenPos) <= this.knobRadius;
+            dist(this.knobPos(), handposition) <= this.knobRadius;
         if (gesture == "Closed_Fist") {
             if (overlapping) this.grabbed = true;
         } else {
@@ -80,8 +79,8 @@ export class Slider extends Interactable {
             
             if (lenSquared > 0) {
                 // Vector from p1 to hand position
-                const tx = handScreenPos.x - this.p1.x;
-                const ty = handScreenPos.y - this.p1.y;
+                const tx = handposition.x - this.p1.x;
+                const ty = handposition.y - this.p1.y;
                 
                 // Project onto line
                 let t = (tx * this.p1p2.x + ty * this.p1p2.y) / lenSquared;
@@ -112,7 +111,7 @@ export class Button extends Interactable {
     }
 
     evaluate(gesture: string, handposition: Vector2): void {
-        let overlapping: boolean = dist(this.position, handToScreenSpace(handposition, this.sk)) <= this.radius;
+        let overlapping: boolean = dist(this.position, handposition) <= this.radius;
         
         if (gesture == "Closed_Fist") {
             if (overlapping && !this.wasGrabbed) {
@@ -160,8 +159,7 @@ export class Wheel extends Interactable {
     }
 
     evaluate(gesture: string, handposition: Vector2): void {
-        const handScreenPos = handToScreenSpace(handposition, this.sk);
-        const distFromCenter = dist(this.position, handScreenPos);
+        const distFromCenter = dist(this.position, handposition);
         const overlapping = distFromCenter >= this.innerRadius && distFromCenter <= this.outerRadius;
         
         this.hovering = overlapping;
@@ -174,13 +172,13 @@ export class Wheel extends Interactable {
         if (gesture == "Closed_Fist") {
             if (!this.grabbed && overlapping) {
                 this.grabbed = true;
-                this.lastAngle = calculateAngle(handScreenPos);
+                this.lastAngle = calculateAngle(handposition);
                 this.grabStartFill = this.fill;
                 this.accumulatedRotation = 0;
             }
             
             if (this.grabbed && this.lastAngle !== null) {
-                const currentAngle = calculateAngle(handScreenPos);
+                const currentAngle = calculateAngle(handposition);
                 let angleDiff = currentAngle - this.lastAngle;
                 
                 // Normalize to shortest path for this frame only

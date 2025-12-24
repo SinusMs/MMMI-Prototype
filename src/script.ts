@@ -2,7 +2,6 @@ import p5 from 'p5';
 import { ResultsHandler } from './resultshandler';
 import { Interactable, DraggableEllipse, Slider, Button, Wheel } from './interactable';
 import * as Audio from './audioManager'
-import { handToScreenSpace } from './utils';
 
 let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
@@ -55,7 +54,7 @@ const sketch = (sk: p5) => {
         vidSrc = sk.createCapture(sk.VIDEO) as p5.MediaElement<HTMLVideoElement>;
         vidSrc.elt.onloadeddata = recoginzeGestures;
 
-        interactables.push(new DraggableEllipse(sk, { x: 0.1, y: 0.3 }, 100));
+        interactables.push(new DraggableEllipse(sk, { x: 1700, y: 300 }, 100));
         interactables.push(new Slider(sk, { x: sk.width - 500, y: sk.height - 100 }, { x: sk.width - 500, y: sk.height - (sk.height - 100) }, 0.5));
         interactables.push(new Button(sk, { x: 200, y: 200 }, 80));
         interactables.push(new Wheel(sk, { x: 1000, y: 500 },200,260, 0.25));
@@ -71,11 +70,10 @@ const sketch = (sk: p5) => {
         sk.fill(47, 79, 79);
         let handposition = results.getExtrapolatedHandPosition();
         if (handposition) {
-            const handScreenPos = handToScreenSpace(handposition, sk);
-            sk.ellipse(handScreenPos.x, handScreenPos.y, 10, 10);
+            sk.ellipse(handposition.x, handposition.y, 10, 10);
             vidSrc?.hide();
-            sk.line(handScreenPos.x, 0, handScreenPos.x, sk.height);
-            sk.line(0, handScreenPos.y, sk.width, handScreenPos.y);   
+            sk.line(handposition.x, 0, handposition.x, sk.height);
+            sk.line(0, handposition.y, sk.width, handposition.y);   
         }
         else vidSrc?.show();
 
@@ -92,7 +90,7 @@ const sketch = (sk: p5) => {
         textGraphics.text("total video processing time: " + vidProcessingTime.toFixed(1).padStart(4, '0') + " ms", 10, 70);
         textGraphics.text("recognize time: " + recognizeTime.toFixed(1).padStart(4, '0') + " ms", 10, 90);
         textGraphics.text("draw time: " + (performance.now() - t0).toFixed(1).padStart(4, '0')+ " ms", 10, 110);
-        textGraphics.text("hand position: " + (handposition ? `(${handToScreenSpace(handposition, sk).x.toFixed(0)}, ${handToScreenSpace(handposition, sk).y.toFixed(0)})` : "N/A"), 10, 130);
+        textGraphics.text("hand position: " + (handposition ? `(${handposition.x.toFixed(0)}, ${handposition.y.toFixed(0)})` : "N/A"), 10, 130);
         
         sk.push();
         sk.resetMatrix();
