@@ -53,13 +53,16 @@ export class Slider extends Interactable {
     fill: number;
     knobRadius: number = 20;
     knobPos = () => lerp(this.p1, this.p2, this.fill);
+    callback: ((value: number) => void) | null = null;
 
-    constructor(sk: p5, p1: Vector2, p2: Vector2, fill: number = 0.5) {
+    constructor(sk: p5, p1: Vector2, p2: Vector2, fill: number = 0.5, callback: ((value: number) => void) | null = null) {
         super(sk);
         this.p1 = p1;
         this.p2 = p2;
         this.p1p2 = { x: p2.x - p1.x, y: p2.y - p1.y };
         this.fill = fill;
+        this.callback = callback;
+        this.callback?.(fill);
     }
 
     evaluate(gesture: string, handposition: Vector2): void {
@@ -89,6 +92,7 @@ export class Slider extends Interactable {
                 this.fill = Math.max(0, Math.min(1, lerpScalar(this.fill, t, this.drag)));
             }
         }
+        this.callback?.(this.fill);
     }
 
     draw(): void {
@@ -101,13 +105,14 @@ export class Slider extends Interactable {
 export class Button extends Interactable {
     position: Vector2;
     radius: number;
-    toggled: boolean = false;
     private wasGrabbed: boolean = false;
+    callback: (() => void) | null = null;
 
-    constructor(sk: p5, position: Vector2, radius: number) {
+    constructor(sk: p5, position: Vector2, radius: number, callback: (() => void) | null = null) {
         super(sk);
         this.position = position;
         this.radius = radius;
+        this.callback = callback;
     }
 
     evaluate(gesture: string, handposition: Vector2): void {
@@ -115,8 +120,8 @@ export class Button extends Interactable {
         
         if (gesture == "Closed_Fist") {
             if (overlapping && !this.wasGrabbed) {
-                this.toggled = !this.toggled;
                 this.wasGrabbed = true;
+                this.callback?.();
             }
             this.grabbed = overlapping;
         } else {
@@ -127,13 +132,10 @@ export class Button extends Interactable {
     }
 
     draw(): void {
-        if (this.toggled) {
-            this.sk.fill(100, 200, 100); 
-        } else {
-            this.sk.fill(200, 100, 100); 
-        }
-        
+        this.sk.push();
+        this.sk.fill(100, 200, 100); 
         this.sk.circle(this.position.x, this.position.y, this.radius * 2);
+        this.sk.pop();
     }
 }
 
@@ -147,8 +149,9 @@ export class Wheel extends Interactable {
     private lastAngle: number | null = null;
     private grabStartFill: number = 0;
     private accumulatedRotation: number = 0;
+    callback: ((value: number) => void) | null = null;
 
-    constructor(sk: p5, position: Vector2, innerRadius: number, outerRadius: number, fill: number = 0.5, start: number = 0, end: number = 2 * Math.PI) {
+    constructor(sk: p5, position: Vector2, innerRadius: number, outerRadius: number, fill: number = 0.5, start: number = 0, end: number = 2 * Math.PI, callback: ((value: number) => void) | null = null) {
         super(sk);
         this.position = position;
         this.innerRadius = innerRadius;
@@ -156,6 +159,8 @@ export class Wheel extends Interactable {
         this.fill = fill;
         this.start = start;
         this.end = end;
+        this.callback = callback;
+        this.callback?.(fill);
     }
 
     evaluate(gesture: string, handposition: Vector2): void {
@@ -196,6 +201,7 @@ export class Wheel extends Interactable {
             this.grabbed = false;
             this.lastAngle = null;
         }
+        this.callback?.(this.fill);
     }
 
     draw(): void {

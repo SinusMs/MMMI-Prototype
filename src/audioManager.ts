@@ -37,6 +37,21 @@ lowpass.connect(reverb);
 
 export let loopVolumes: Tone.Volume[] = [];
 
+export const loopPaths = [
+    "audio/track1.wav",
+    "audio/track2.wav",
+    "audio/track3.wav",
+    "audio/track4.wav"
+];
+
+export const samplePaths = [
+    "audio/sample1.wav",
+    "audio/sample2.wav",
+    "audio/sample3.wav",
+    "audio/sample4.wav",
+    "audio/sample5.wav"
+];
+
 export async function initAudio() {
     if (isLoaded) return;
 
@@ -49,20 +64,6 @@ export async function initAudio() {
     lowpass.frequency.value = 20000;
     highpass.frequency.value = 10; // Sicherer Wert
 
-    const loopPaths = [
-        "audio/track1.wav",
-        "audio/track2.wav",
-        "audio/track3.wav",
-        "audio/track4.wav"
-    ];
-
-    const samplePaths = [
-        "audio/sample1.wav",
-        "audio/sample2.wav",
-        "audio/sample3.wav",
-        "audio/sample4.wav",
-        "audio/sample5.wav"
-    ];
 
     // Loops laden
     for (let i = 0; i < loopPaths.length; i++) {

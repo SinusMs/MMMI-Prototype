@@ -1,7 +1,7 @@
 import p5 from 'p5';
 import { ResultsHandler } from './resultshandler';
-import { Interactable, DraggableEllipse, Slider, Button, Wheel } from './interactable';
 import * as Audio from './audioManager'
+import { UI } from './ui';
 
 let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
@@ -30,21 +30,18 @@ worker.onmessage = (e) => {
 worker.postMessage({ type: "init" });
 
 const sketch = (sk: p5) => {
-    let interactables: Interactable[] = [];
     let textGraphics: p5.Graphics;
-
+    let ui: UI;
+    
     sk.mousePressed = async () => {
         await Audio.initAudio();
         Audio.startLoop();
-        Audio.setLoopVolume(0, 0.1);
-        Audio.setLoopVolume(1, 0.1);
-        Audio.setLoopVolume(2, 0.1);
-        Audio.setLoopVolume(3, 0.1);
     }
-
+    
     sk.setup = () => {
         sk.createCanvas(1920 - 16, 1080 - 16, sk.WEBGL, canvasEl); 
         sk.setAttributes({ antialias: true });
+        ui = new UI(sk);
         
         textGraphics = sk.createGraphics(1920 - 16, 1080 - 16);
         textGraphics.textSize(16);
@@ -53,11 +50,6 @@ const sketch = (sk: p5) => {
         sk.frameRate(60);
         vidSrc = sk.createCapture(sk.VIDEO) as p5.MediaElement<HTMLVideoElement>;
         vidSrc.elt.onloadeddata = recoginzeGestures;
-
-        interactables.push(new DraggableEllipse(sk, { x: 1700, y: 300 }, 100));
-        interactables.push(new Slider(sk, { x: sk.width - 500, y: sk.height - 100 }, { x: sk.width - 500, y: sk.height - (sk.height - 100) }, 0.5));
-        interactables.push(new Button(sk, { x: 200, y: 200 }, 80));
-        interactables.push(new Wheel(sk, { x: 1000, y: 500 },200,260, 0.25));
     };
     
     sk.draw = () => {
@@ -69,19 +61,11 @@ const sketch = (sk: p5) => {
         
         sk.fill(47, 79, 79);
         let handposition = results.getExtrapolatedHandPosition();
-        if (handposition) {
-            sk.ellipse(handposition.x, handposition.y, 10, 10);
-            vidSrc?.hide();
-            sk.line(handposition.x, 0, handposition.x, sk.height);
-            sk.line(0, handposition.y, sk.width, handposition.y);   
-        }
+        if (handposition) vidSrc?.hide();
         else vidSrc?.show();
 
-        for (let interactable of interactables) { 
-            if (handposition) interactable.evaluate(results.getGesture(), handposition!);
-            interactable.draw();
-            sk.fill(47, 79, 79);
-        }
+        ui.evaluate(results.getGesture(), handposition);
+        ui.draw();
 
         textGraphics.clear();
         textGraphics.fill(47, 79, 79);
