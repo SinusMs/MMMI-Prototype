@@ -115,10 +115,12 @@ export class UI {
         }
     }
 
-    public draw(): void {
-        this.sliderBox.draw(this.sk);
-        this.buttonBox.draw(this.sk);
-        this.wheelBox.draw(this.sk);
+    public draw(debug: boolean = false): void {
+        if (debug) {
+            this.sliderBox.draw(this.sk);
+            this.buttonBox.draw(this.sk);
+            this.wheelBox.draw(this.sk);
+        }
         for (const interactable of this.interactables) {
             interactable.draw();
         }
@@ -141,15 +143,15 @@ class Box {
     }
 
     draw(sk: p5): void {
-        // sk.push();
-        // sk.rectMode(sk.CORNERS);
-        // sk.stroke(300, 0, 0);
-        // sk.noFill();
-        // sk.rect(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
-        // sk.rect(this.p1.x + this.padding, this.p1.y + this.padding, this.p2.x - this.padding, this.p2.y - this.padding);
-        // sk.circle(this.p1.x, this.p1.y, 10);
-        // sk.circle(this.p2.x, this.p2.y, 10);
-        // sk.pop();
+        sk.push();
+        sk.rectMode(sk.CORNERS);
+        sk.stroke(300, 0, 0);
+        sk.noFill();
+        sk.rect(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
+        sk.rect(this.p1.x + this.padding, this.p1.y + this.padding, this.p2.x - this.padding, this.p2.y - this.padding);
+        sk.circle(this.p1.x, this.p1.y, 10);
+        sk.circle(this.p2.x, this.p2.y, 10);
+        sk.pop();
     }
 
     minX(): number {

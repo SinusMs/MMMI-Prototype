@@ -8,6 +8,7 @@ let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCan
 let results: ResultsHandler = new ResultsHandler();
 let vidProcessingTime: number = -1;
 let recognizeTime: number = -1;
+let debug: boolean = false;
 
 const worker = new Worker(new URL('./gesture-worker.js', import.meta.url));
 worker.onmessage = (e) => {
@@ -66,7 +67,9 @@ const sketch = (sk: p5) => {
         else vidSrc?.show();
 
         ui.evaluate(results.getGesture(), handposition);
-        ui.draw();
+        ui.draw(debug);
+
+        if (!debug) return;
 
         textGraphics.clear();
         textGraphics.fill(47, 79, 79);
@@ -88,6 +91,9 @@ const sketch = (sk: p5) => {
     sk.keyPressed = () => {
         if (sk.key === 'f') {
             sk.fullscreen(!sk.fullscreen());
+        }
+        if (sk.key === 'd') {
+            debug = !debug;
         }
     }
 };
