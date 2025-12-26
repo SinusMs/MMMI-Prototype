@@ -148,9 +148,9 @@ export class Button extends Interactable {
 
 export class Wheel extends Interactable {
     position: Vector2;
-    innerRadius: number;
-    outerRadius: number;
+    radius: number;
     fill: number;
+    startFill: number;
     start: number;
     end: number;
     private lastAngle: number | null = null;
@@ -158,12 +158,12 @@ export class Wheel extends Interactable {
     private accumulatedRotation: number = 0;
     callback: ((value: number) => void) | null = null;
 
-    constructor(sk: p5, position: Vector2, innerRadius: number, outerRadius: number, fill: number = 0.5, start: number = 0, end: number = 2 * Math.PI, callback: ((value: number) => void) | null = null) {
+    constructor(sk: p5, position: Vector2, radius: number, fill: number = 0.5, start: number = 0, end: number = 2 * Math.PI, callback: ((value: number) => void) | null = null) {
         super(sk);
         this.position = position;
-        this.innerRadius = innerRadius;
-        this.outerRadius = outerRadius;
+        this.radius = radius;
         this.fill = fill;
+        this.startFill = fill;
         this.start = start;
         this.end = end;
         this.callback = callback;
@@ -172,7 +172,7 @@ export class Wheel extends Interactable {
 
     evaluate(gesture: string, handposition: Vector2): void {
         const distFromCenter = dist(this.position, handposition);
-        const overlapping = distFromCenter >= this.innerRadius && distFromCenter <= this.outerRadius;
+        const overlapping = distFromCenter <= this.radius;
         
         this.hovering = overlapping;
         
@@ -213,27 +213,40 @@ export class Wheel extends Interactable {
 
     draw(): void {
         this.sk.push();
-        // Draw the ring
-        this.sk.noFill();
-        this.sk.strokeWeight(this.outerRadius - this.innerRadius);
-        this.sk.ellipse(this.position.x, this.position.y, (this.innerRadius + ((this.outerRadius - this.innerRadius) / 2)) * 2, (this.innerRadius + ((this.outerRadius - this.innerRadius) / 2)) * 2, 50);
+        // Draw the circle
+        this.sk.strokeWeight(0);
+        // this.sk.circle(this.position.x, this.position.y, this.radius * 2);
+        this.sk.ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2, 64);
     
-        // Draw the knob to show rotation
-        const knobRadius = (this.outerRadius - this.innerRadius) / 2;
-        const knobDistance = (this.innerRadius + this.outerRadius) / 2;
+        // Calculate angles
+        const currentAngle = this.start + this.fill * (this.end - this.start);
+        const startAngle = this.start + this.startFill * (this.end - this.start);
         
-        // Calculate knob position based on fill, mapped to [start, end] range
-        const angle = this.start + this.fill * (this.end - this.start);
-        const knobX = this.position.x + Math.sin(angle) * knobDistance;
-        const knobY = this.position.y - Math.cos(angle) * knobDistance;
+        // Draw the arc showing difference from startFill
+        this.sk.noFill();
+        if (this.fill - 0.005 > this.startFill) {
+            this.sk.stroke(255, 0, 0); // Red
+            this.sk.strokeWeight(8);
+            this.sk.arc(this.position.x, this.position.y, this.radius * 2, this.radius * 2, 
+                        startAngle - Math.PI / 2, currentAngle - Math.PI / 2);
+        } else if (this.fill + 0.005 < this.startFill) {
+            this.sk.stroke(0, 0, 255); // Blue
+            this.sk.strokeWeight(8);
+            this.sk.arc(this.position.x, this.position.y, this.radius * 2, this.radius * 2, 
+                        currentAngle - Math.PI / 2, startAngle - Math.PI / 2);
+        }
         
-        this.sk.fill(150);
+        // Draw the clock hand
+        const handX = this.position.x + Math.sin(currentAngle) * this.radius;
+        const handY = this.position.y - Math.cos(currentAngle) * this.radius;
+        
         if (this.hovering) {
             this.sk.strokeWeight(3);
         } else {
-            this.sk.strokeWeight(1);
+            this.sk.strokeWeight(2);
         }
-        this.sk.circle(knobX, knobY, knobRadius * 2);
+        this.sk.stroke(0);
+        this.sk.line(this.position.x, this.position.y, handX, handY);
         this.sk.pop();
     }
 

@@ -64,23 +64,45 @@ export class UI {
         }
 
 
-        const outerRadius = 110;
-        minY = this.wheelBox.minY() + outerRadius;
-        maxY = this.wheelBox.maxY() - outerRadius;
-        step = (maxY - minY) / 2;
-        for (let i = 0; i < 3; i++) {
-            const effectTypes: ('reverb' | 'delay' | 'filter')[] = ['reverb', 'delay', 'filter'];
-            this.interactables.push(new Wheel(sk, 
+        const radius = 110;
+        const wheelConfigs = {
+            'reverb': { fill: 0.0, start: - Math.PI * 0.7, end: Math.PI * 0.7 },
+            'delay': { fill: 0.0, start: - Math.PI * 0.7, end: Math.PI * 0.7 },
+            'filter': { fill: 0.5, start: - Math.PI * 0.7, end: Math.PI * 0.7 },
+        }
+        minY = this.wheelBox.minY() + radius;
+        maxY = this.wheelBox.maxY() - radius;
+        step = (maxY - minY) / (Object.keys(wheelConfigs).length - 1);
+        for (let i = 0; i < Object.keys(wheelConfigs).length; i++) {
+            const type = Object.keys(wheelConfigs)[i] as 'reverb' | 'delay' | 'filter';
+            pushWheel(
+                this.interactables,
+                type,
                 { 
-                    x: this.wheelBox.maxX() - outerRadius,
+                    x: this.wheelBox.maxX() - radius,
                     y: minY + i * step
-                }, 
-                60, 
-                outerRadius,
-                0.0,
-                0,
-                2 * Math.PI,
-                (value: number) => Audio.setEffectValue(effectTypes[i], value)
+                },
+                wheelConfigs[type].fill,
+                wheelConfigs[type].start,
+                wheelConfigs[type].end
+            );
+        }
+
+        function pushWheel(
+            interactables: Interactable[],
+            effectType: 'reverb' | 'delay' | 'filter',
+            position: Vector2,
+            fill: number,
+            start: number,
+            end: number
+        ) {
+            interactables.push(new Wheel(sk, 
+                position,
+                radius,
+                fill,
+                start,
+                end,
+                (value: number) => Audio.setEffectValue(effectType, value)
             ));
         }
     }
