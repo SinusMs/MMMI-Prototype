@@ -36,6 +36,7 @@ const sketch = (sk: p5) => {
     sk.mousePressed = async () => {
         await Audio.initAudio();
         Audio.startLoop();
+        ui?.evaluate("", { x: 0, y: 0 });
     }
     
     sk.setup = () => {

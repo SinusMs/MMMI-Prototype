@@ -51,11 +51,12 @@ export class Slider extends Interactable {
     p2: Vector2;
     p1p2: Vector2;
     fill: number;
-    knobRadius: number = 20;
+    sliderThickness: number = 40;
+    knobRadius: number = 40;
     knobPos = () => lerp(this.p1, this.p2, this.fill);
     callback: ((value: number) => void) | null = null;
 
-    constructor(sk: p5, p1: Vector2, p2: Vector2, fill: number = 0.5, callback: ((value: number) => void) | null = null) {
+    constructor(sk: p5, p1: Vector2, p2: Vector2, fill: number = 0.5, callback: ((value: number) => void) | null = null, sliderThickness: number = 40) {
         super(sk);
         this.p1 = p1;
         this.p2 = p2;
@@ -63,6 +64,8 @@ export class Slider extends Interactable {
         this.fill = fill;
         this.callback = callback;
         this.callback?.(fill);
+        this.sliderThickness = sliderThickness;
+        this.knobRadius = sliderThickness / 2 + 3;
     }
 
     evaluate(gesture: string, handposition: Vector2): void {
@@ -96,8 +99,12 @@ export class Slider extends Interactable {
     }
 
     draw(): void {
+        this.sk.push();
+        this.sk.strokeWeight(this.sliderThickness);
         this.sk.line(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
+        this.sk.strokeWeight(0);
         this.sk.circle(this.knobPos().x, this.knobPos().y, this.knobRadius * 2);
+        this.sk.pop();
     }
 }
 

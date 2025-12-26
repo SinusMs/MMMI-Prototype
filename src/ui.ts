@@ -16,47 +16,67 @@ export class UI {
         this.sk = sk;
         this.sliderBox = new Box(
             { x: padding.x, y: padding.y },
-            { x: 1300, y: 600 }
+            { x: 1400, y: 600 }
         );
         this.buttonBox = new Box(
             { x: padding.x, y: 600 },
-            { x: 1300, y: sk.height - padding.y }
+            { x: 1400, y: sk.height - padding.y }
         );
         this.wheelBox = new Box(
-            { x: 1300, y: padding.y },
+            { x: 1400, y: padding.y },
             { x: sk.width - padding.x, y: sk.height - padding.y }
         );
 
         this.interactables = [];
+
+        const sliderThickness = 100;
+        let minX = this.sliderBox.minX() + sliderThickness / 2;
+        let maxX = this.sliderBox.maxX() - sliderThickness / 2;
+        let step = (maxX - minX) / (Audio.loopPaths.length - 1);
+        let minY = this.sliderBox.minY() + sliderThickness / 2;
+        let maxY = this.sliderBox.maxY() - sliderThickness / 2;
         for (let i = 0; i < Audio.loopPaths.length; i++) {
             this.interactables.push(new Slider(sk, 
-                { x: this.sliderBox.minX() + (i + 1) * (this.sliderBox.maxX() - this.sliderBox.minX()) / (Audio.loopPaths.length + 1), y: this.sliderBox.maxY() }, 
-                { x: this.sliderBox.minX() + (i + 1) * (this.sliderBox.maxX() - this.sliderBox.minX()) / (Audio.loopPaths.length + 1), y: this.sliderBox.minY() }, 
+                { x: minX + i * step, y: maxY }, 
+                { x: minX + i * step, y: minY }, 
                 i == 1 ? 0.5 : 0.0,
-                (value: number) => Audio.setLoopVolume(i, value)
+                (value: number) => Audio.setLoopVolume(i, value),
+                sliderThickness
             ));
         }
 
+        const buttonRadius = 70;
+        minX = this.buttonBox.minX() + buttonRadius;
+        maxX = this.buttonBox.maxX() - buttonRadius;
+        step = (maxX - minX) / (Audio.samplePaths.length - 1);
+        let centerY = this.buttonBox.minY() + (this.buttonBox.maxY() - this.buttonBox.minY()) / 2;
+        let offsetY: number = this.buttonBox.maxY() - centerY - buttonRadius;
         for (let i = 0; i < Audio.samplePaths.length; i++) {
+            offsetY *= -1;
             this.interactables.push(new Button(sk, 
                 { 
-                    x: this.buttonBox.minX() + (i + 1) * (this.buttonBox.maxX() - this.buttonBox.minX()) / 6, 
-                    y: this.buttonBox.minY() + (this.buttonBox.maxY() - this.buttonBox.minY()) / 2 
+                    x: minX + i * step, 
+                    y: centerY + offsetY
                 }, 
-                50,
+                buttonRadius,
                 () => Audio.triggerSample(i)
             ));
         }
 
+
+        const outerRadius = 110;
+        minY = this.wheelBox.minY() + outerRadius;
+        maxY = this.wheelBox.maxY() - outerRadius;
+        step = (maxY - minY) / 2;
         for (let i = 0; i < 3; i++) {
             const effectTypes: ('reverb' | 'delay' | 'filter')[] = ['reverb', 'delay', 'filter'];
             this.interactables.push(new Wheel(sk, 
                 { 
-                    x: this.wheelBox.minX() + (this.wheelBox.maxX() - this.wheelBox.minX()) / 2,
-                    y: this.wheelBox.minY() + (i + 1) * (this.wheelBox.maxY() - this.wheelBox.minY()) / 4
+                    x: this.wheelBox.maxX() - outerRadius,
+                    y: minY + i * step
                 }, 
                 60, 
-                100,
+                outerRadius,
                 0.0,
                 0,
                 2 * Math.PI,
@@ -91,6 +111,7 @@ export class UI {
 class Box {
     p1: Vector2;
     p2: Vector2;
+    padding: number = 40;
 
     constructor(p1: Vector2, p2: Vector2) {
         this.p1 = p1;
@@ -98,29 +119,30 @@ class Box {
     }
 
     draw(sk: p5): void {
-        sk.push();
-        sk.rectMode(sk.CORNERS);
-        sk.stroke(300, 0, 0);
-        sk.noFill();
-        sk.rect(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
-        sk.circle(this.p1.x, this.p1.y, 10);
-        sk.circle(this.p2.x, this.p2.y, 10);
-        sk.pop();
+        // sk.push();
+        // sk.rectMode(sk.CORNERS);
+        // sk.stroke(300, 0, 0);
+        // sk.noFill();
+        // sk.rect(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
+        // sk.rect(this.p1.x + this.padding, this.p1.y + this.padding, this.p2.x - this.padding, this.p2.y - this.padding);
+        // sk.circle(this.p1.x, this.p1.y, 10);
+        // sk.circle(this.p2.x, this.p2.y, 10);
+        // sk.pop();
     }
 
     minX(): number {
-        return Math.min(this.p1.x, this.p2.x);
+        return Math.min(this.p1.x, this.p2.x) + this.padding;
     }
 
     maxX(): number {
-        return Math.max(this.p1.x, this.p2.x);
+        return Math.max(this.p1.x, this.p2.x) - this.padding;
     }
 
     minY(): number {
-        return Math.min(this.p1.y, this.p2.y);
+        return Math.min(this.p1.y, this.p2.y) + this.padding;
     }
 
     maxY(): number {
-        return Math.max(this.p1.y, this.p2.y);
+        return Math.max(this.p1.y, this.p2.y) - this.padding;
     }
 }
