@@ -103,7 +103,7 @@ export class Slider extends Interactable {
         this.sk.strokeWeight(this.sliderThickness);
         this.sk.line(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
         this.sk.strokeWeight(0);
-        this.sk.circle(this.knobPos().x, this.knobPos().y, this.knobRadius * 2);
+        this.sk.ellipse(this.knobPos().x, this.knobPos().y, this.knobRadius * 2, this.knobRadius * 2, 64);
         this.sk.pop();
     }
 }
@@ -140,8 +140,8 @@ export class Button extends Interactable {
 
     draw(): void {
         this.sk.push();
-        this.sk.fill(100, 200, 100); 
-        this.sk.circle(this.position.x, this.position.y, this.radius * 2);
+        this.sk.noStroke();
+        this.sk.ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2, 64);
         this.sk.pop();
     }
 }
@@ -221,30 +221,28 @@ export class Wheel extends Interactable {
         // Calculate angles
         const currentAngle = this.start + this.fill * (this.end - this.start);
         const startAngle = this.start + this.startFill * (this.end - this.start);
+
+        const strokeWeight = 7;
+        const arcSpaceToCenter = this.radius - strokeWeight - 10;
+        this.sk.strokeWeight(strokeWeight);
         
         // Draw the arc showing difference from startFill
         this.sk.noFill();
         if (this.fill - 0.005 > this.startFill) {
             this.sk.stroke(255, 0, 0); // Red
-            this.sk.strokeWeight(8);
-            this.sk.arc(this.position.x, this.position.y, this.radius * 2, this.radius * 2, 
+            this.sk.arc(this.position.x, this.position.y, arcSpaceToCenter * 2, arcSpaceToCenter * 2, 
                         startAngle - Math.PI / 2, currentAngle - Math.PI / 2);
         } else if (this.fill + 0.005 < this.startFill) {
             this.sk.stroke(0, 0, 255); // Blue
-            this.sk.strokeWeight(8);
-            this.sk.arc(this.position.x, this.position.y, this.radius * 2, this.radius * 2, 
+            this.sk.arc(this.position.x, this.position.y, arcSpaceToCenter * 2, arcSpaceToCenter * 2, 
                         currentAngle - Math.PI / 2, startAngle - Math.PI / 2);
         }
-        
+  
         // Draw the clock hand
-        const handX = this.position.x + Math.sin(currentAngle) * this.radius;
-        const handY = this.position.y - Math.cos(currentAngle) * this.radius;
+        const handInset = 15;
+        const handX = this.position.x + Math.sin(currentAngle) * (arcSpaceToCenter - strokeWeight - handInset);
+        const handY = this.position.y - Math.cos(currentAngle) * (arcSpaceToCenter - strokeWeight - handInset);
         
-        if (this.hovering) {
-            this.sk.strokeWeight(3);
-        } else {
-            this.sk.strokeWeight(2);
-        }
         this.sk.stroke(0);
         this.sk.line(this.position.x, this.position.y, handX, handY);
         this.sk.pop();
