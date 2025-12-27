@@ -2,6 +2,7 @@ import p5 from 'p5';
 import { ResultsHandler } from './resultshandler';
 import * as Audio from './audioManager'
 import { UI } from './ui';
+import * as Color from './colors';
 
 let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
@@ -61,7 +62,6 @@ const sketch = (sk: p5) => {
         // Transform origin to top-left corner (like p5's 2D mode)
         sk.translate(-sk.width / 2, -sk.height / 2);
         
-        sk.fill(47, 79, 79);
         let handposition = results.getExtrapolatedHandPosition();
         if (handposition) vidSrc?.hide();
         else vidSrc?.show();
@@ -72,7 +72,7 @@ const sketch = (sk: p5) => {
         if (!debug) return;
 
         textGraphics.clear();
-        textGraphics.fill(47, 79, 79);
+        textGraphics.fill(Color.debug1);
         textGraphics.text(results.getGesture(), 10, 30);
         textGraphics.text("framerate: " + sk.frameRate().toFixed(1) + " fps", 10, 50);
         textGraphics.text("total video processing time: " + vidProcessingTime.toFixed(1).padStart(4, '0') + " ms", 10, 70);

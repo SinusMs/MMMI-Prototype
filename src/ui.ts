@@ -2,6 +2,7 @@ import { Vector2 } from "./utils";
 import p5 from "p5";
 import * as Audio from './audioManager'
 import { Interactable, Slider, Button, Wheel } from './interactable';
+import * as Color from './colors';
 
 const padding = { x: 120, y: 120 };
 export class UI {
@@ -116,6 +117,7 @@ export class UI {
     }
 
     public draw(debug: boolean = false): void {
+        this.sk.push();
         if (debug) {
             this.sliderBox.draw(this.sk);
             this.buttonBox.draw(this.sk);
@@ -125,10 +127,13 @@ export class UI {
             interactable.draw();
         }
         if (this.handposition) {
+            this.sk.stroke(Color.light);
+            this.sk.fill(Color.light);
             this.sk.line(this.handposition.x, 0, this.handposition.x, this.sk.height);
             this.sk.line(0, this.handposition.y, this.sk.width, this.handposition.y);
             this.sk.ellipse(this.handposition.x, this.handposition.y, 10, 10);
         }
+        this.sk.pop();
     }
 }
 
@@ -145,7 +150,7 @@ class Box {
     draw(sk: p5): void {
         sk.push();
         sk.rectMode(sk.CORNERS);
-        sk.stroke(300, 0, 0);
+        sk.stroke(Color.debug2);
         sk.noFill();
         sk.rect(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
         sk.rect(this.p1.x + this.padding, this.p1.y + this.padding, this.p2.x - this.padding, this.p2.y - this.padding);

@@ -1,5 +1,6 @@
 import p5 from "p5";
 import { Vector2, lerp, lerpScalar, dist } from "./utils.ts";
+import * as Color from './colors';
 
 export abstract class Interactable {
     sk: p5;
@@ -101,8 +102,10 @@ export class Slider extends Interactable {
     draw(): void {
         this.sk.push();
         this.sk.strokeWeight(this.sliderThickness);
+        this.sk.stroke(Color.blue400)
         this.sk.line(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
         this.sk.strokeWeight(0);
+        this.sk.fill(Color.blue500)
         this.sk.ellipse(this.knobPos().x, this.knobPos().y, this.knobRadius * 2, this.knobRadius * 2, 64);
         this.sk.pop();
     }
@@ -141,6 +144,7 @@ export class Button extends Interactable {
     draw(): void {
         this.sk.push();
         this.sk.noStroke();
+        this.sk.fill(this.grabbed ? Color.accent1 : this.hovering ? Color.accent5 : Color.blue500);
         this.sk.ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2, 64);
         this.sk.pop();
     }
@@ -215,7 +219,7 @@ export class Wheel extends Interactable {
         this.sk.push();
         // Draw the circle
         this.sk.strokeWeight(0);
-        // this.sk.circle(this.position.x, this.position.y, this.radius * 2);
+        this.sk.fill(Color.blue500)
         this.sk.ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2, 64);
     
         // Calculate angles
@@ -229,11 +233,11 @@ export class Wheel extends Interactable {
         // Draw the arc showing difference from startFill
         this.sk.noFill();
         if (this.fill - 0.005 > this.startFill) {
-            this.sk.stroke(255, 0, 0); // Red
+            this.sk.stroke(Color.accent1); // Red
             this.sk.arc(this.position.x, this.position.y, arcSpaceToCenter * 2, arcSpaceToCenter * 2, 
                         startAngle - Math.PI / 2, currentAngle - Math.PI / 2);
         } else if (this.fill + 0.005 < this.startFill) {
-            this.sk.stroke(0, 0, 255); // Blue
+            this.sk.stroke(Color.accent5); // Blue
             this.sk.arc(this.position.x, this.position.y, arcSpaceToCenter * 2, arcSpaceToCenter * 2, 
                         currentAngle - Math.PI / 2, startAngle - Math.PI / 2);
         }
@@ -243,7 +247,7 @@ export class Wheel extends Interactable {
         const handX = this.position.x + Math.sin(currentAngle) * (arcSpaceToCenter - strokeWeight - handInset);
         const handY = this.position.y - Math.cos(currentAngle) * (arcSpaceToCenter - strokeWeight - handInset);
         
-        this.sk.stroke(0);
+        this.sk.stroke(Color.blue400);
         this.sk.line(this.position.x, this.position.y, handX, handY);
         this.sk.pop();
     }
