@@ -226,7 +226,7 @@ export class Wheel extends Interactable {
         const currentAngle = this.start + this.fill * (this.end - this.start);
         const startAngle = this.start + this.startFill * (this.end - this.start);
 
-        const strokeWeight = 7;
+        const strokeWeight = 10;
         const arcSpaceToCenter = this.radius - strokeWeight - 10;
         this.sk.strokeWeight(strokeWeight);
         
