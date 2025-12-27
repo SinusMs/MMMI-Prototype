@@ -115,6 +115,7 @@ export class Slider extends Interactable {
 export class Button extends Interactable {
     position: Vector2;
     radius: number;
+    outline: number = 6;
     private wasGrabbed: boolean = false;
     callback: (() => void) | null = null;
 
@@ -143,9 +144,10 @@ export class Button extends Interactable {
 
     draw(): void {
         this.sk.push();
-        this.sk.noStroke();
+        this.sk.strokeWeight(this.outline);
+        this.sk.stroke(this.grabbed ? Color.blue600 : this.hovering ? Color.blue500 : Color.blue400);
         this.sk.fill(this.grabbed ? Color.accent1 : this.hovering ? Color.accent5 : Color.blue500);
-        this.sk.ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2, 64);
+        this.sk.ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2, 48);
         this.sk.pop();
     }
 }
