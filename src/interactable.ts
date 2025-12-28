@@ -53,7 +53,9 @@ export class Slider extends Interactable {
     p1p2: Vector2;
     fill: number;
     sliderThickness: number = 40;
-    knobRadius: number = 40;
+    knobRadius: number;
+    defaultKnobRadius: number;
+    activeKnobRadius: number;
     knobPos = () => lerp(this.p1, this.p2, this.fill);
     callback: ((value: number) => void) | null = null;
 
@@ -66,18 +68,21 @@ export class Slider extends Interactable {
         this.callback = callback;
         this.callback?.(fill);
         this.sliderThickness = sliderThickness;
-        this.knobRadius = sliderThickness / 2 + 3;
+        this.defaultKnobRadius = sliderThickness / 2 + 3;
+        this.knobRadius = this.defaultKnobRadius;
+        this.activeKnobRadius = this.defaultKnobRadius + 7;
     }
 
     evaluate(gesture: string, handposition: Vector2): void {
         let overlapping: boolean = 
-            dist(this.knobPos(), handposition) <= this.knobRadius;
+            dist(this.knobPos(), handposition) <= this.activeKnobRadius;
         if (gesture == "Closed_Fist") {
             if (overlapping) this.grabbed = true;
         } else {
             this.grabbed = false;
         }
         this.hovering = overlapping;
+        this.knobRadius = this.hovering || this.grabbed ? this.activeKnobRadius : this.defaultKnobRadius;
         
         if (this.grabbed) {
             
@@ -115,6 +120,8 @@ export class Slider extends Interactable {
 export class Button extends Interactable {
     position: Vector2;
     radius: number;
+    defaultRadius: number;
+    hoverRadius: number;
     outline: number = 6;
     private wasGrabbed: boolean = false;
     callback: (() => void) | null = null;
@@ -123,11 +130,13 @@ export class Button extends Interactable {
         super(sk);
         this.position = position;
         this.radius = radius;
+        this.defaultRadius = radius;
+        this.hoverRadius = radius + 10;
         this.callback = callback;
     }
 
     evaluate(gesture: string, handposition: Vector2): void {
-        let overlapping: boolean = dist(this.position, handposition) <= this.radius;
+        let overlapping: boolean = dist(this.position, handposition) <= this.hoverRadius;
         
         if (gesture == "Closed_Fist") {
             if (overlapping && !this.wasGrabbed) {
@@ -140,13 +149,15 @@ export class Button extends Interactable {
             this.wasGrabbed = false;
         }
         this.hovering = overlapping;
+
+        this.radius = this.grabbed ? this.defaultRadius : this.hovering ? this.hoverRadius : this.defaultRadius;
     }
 
     draw(): void {
         this.sk.push();
         this.sk.strokeWeight(this.outline);
-        this.sk.stroke(this.grabbed ? Color.blue600 : this.hovering ? Color.blue500 : Color.blue400);
-        this.sk.fill(this.grabbed ? Color.accent1 : this.hovering ? Color.accent5 : Color.blue500);
+        this.sk.stroke(Color.blue400);
+        this.sk.fill(Color.blue500);
         this.sk.ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2, 48);
         this.sk.pop();
     }
@@ -155,6 +166,8 @@ export class Button extends Interactable {
 export class Wheel extends Interactable {
     position: Vector2;
     radius: number;
+    defaultRadius: number;
+    activeRadius: number;
     fill: number;
     startFill: number;
     start: number;
@@ -168,6 +181,8 @@ export class Wheel extends Interactable {
         super(sk);
         this.position = position;
         this.radius = radius;
+        this.defaultRadius = radius;
+        this.activeRadius = radius + 10;
         this.fill = fill;
         this.startFill = fill;
         this.start = start;
@@ -178,9 +193,10 @@ export class Wheel extends Interactable {
 
     evaluate(gesture: string, handposition: Vector2): void {
         const distFromCenter = dist(this.position, handposition);
-        const overlapping = distFromCenter <= this.radius;
+        const overlapping = distFromCenter <= this.activeRadius;
         
         this.hovering = overlapping;
+        this.radius = this.grabbed || this.hovering ? this.activeRadius : this.defaultRadius;
         
         const calculateAngle = (pos: Vector2) => {
             let angle = Math.atan2(pos.x - this.position.x, -(pos.y - this.position.y));
