@@ -114,7 +114,7 @@ export class UI {
 
     public evaluate(gesture: string, handposition: Vector2 | null): void {
         this.handposition = handposition;
-        this.cursorParticleSystem.evaluate(handposition);
+        this.cursorParticleSystem.evaluate(gesture, handposition);
         if (!handposition) return;
         for (const interactable of this.interactables) {
             interactable.evaluate(gesture, handposition);

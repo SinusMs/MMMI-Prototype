@@ -16,7 +16,7 @@ export class CursorParticleSystem {
         this.sk = sk;
     }
 
-    evaluate(handposition: Vector2 | null = { x: this.sk.mouseX, y: this.sk.mouseY }): void {
+    evaluate(gesture: string, handposition: Vector2 | null = { x: this.sk.mouseX, y: this.sk.mouseY }): void {
         let movementDistance = handposition == null || this.prevHandPos == null ? 0 :
             Math.hypot(handposition.x - this.prevHandPos.x, handposition.y - this.prevHandPos.y);
         if (this.prevHandPos == null && handposition) this.particlesToEmit += 10;
@@ -27,19 +27,38 @@ export class CursorParticleSystem {
             this.particlesToEmit += this.particlesPerSecond * (this.sk.deltaTime / 1000);
             let integralParticlesToEmit = Math.floor(this.particlesToEmit);
             this.particlesToEmit -= integralParticlesToEmit;
-            for (let i = 0; i < integralParticlesToEmit; i++) {
-                let pos = p5.Vector.random2D().mult(Math.random() * this.emitterRadius);
-                this.particles.push(new Particle(
-                    this.sk,
-                    0.5,
-                    10 + Math.random() * 10,
-                    this.sk.createVector(handposition.x, handposition.y).add(pos), 
-                    this.sk.createVector(
-                        (Math.random() - 0.5) * 2 * 10, 
-                        (Math.random() - 0.5) * 2 * 10
-                    ),
-                    p5.Vector.random2D().mult(10)
-                ));
+            if (gesture == "Closed_Fist") {
+                integralParticlesToEmit *= 2;
+                for (let i = 0; i < integralParticlesToEmit; i++) {
+                    let lifeTime = 0.5;
+                    let position = p5.Vector.random2D().mult(Math.random() * this.emitterRadius * 0.75);
+                    let velocity = position.copy().mult(10);
+                    let acceleration = velocity.copy().mult(-2 / lifeTime);
+                    this.particles.push(new Particle(
+                        this.sk,
+                        lifeTime,
+                        10 + Math.random() * 5,
+                        this.sk.createVector(handposition.x, handposition.y).add(position), 
+                        velocity,
+                        acceleration
+                    ));
+                }
+            }
+            else {
+                for (let i = 0; i < integralParticlesToEmit; i++) {
+                    let pos = p5.Vector.random2D().mult(Math.random() * this.emitterRadius);
+                    this.particles.push(new Particle(
+                        this.sk,
+                        0.5,
+                        10 + Math.random() * 10,
+                        this.sk.createVector(handposition.x, handposition.y).add(pos), 
+                        this.sk.createVector(
+                            (Math.random() - 0.5) * 2 * 10, 
+                            (Math.random() - 0.5) * 2 * 10
+                        ),
+                        p5.Vector.random2D().mult(10)
+                    ));
+                }
             }
         }
 
