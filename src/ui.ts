@@ -3,6 +3,7 @@ import p5 from "p5";
 import * as Audio from './audioManager'
 import { Interactable, Slider, Button, Wheel } from './interactable';
 import * as Color from './colors';
+import { CursorParticleSystem } from "./particlesystem";
 
 const padding = { x: 120, y: 120 };
 export class UI {
@@ -12,6 +13,7 @@ export class UI {
     wheelBox: Box;
     interactables: Interactable[];
     handposition: Vector2 | null = null;
+    cursorParticleSystem: CursorParticleSystem;
 
     constructor(sk: p5) {
         this.sk = sk;
@@ -106,10 +108,13 @@ export class UI {
                 (value: number) => Audio.setEffectValue(effectType, value)
             ));
         }
+
+        this.cursorParticleSystem = new CursorParticleSystem(sk);
     }
 
     public evaluate(gesture: string, handposition: Vector2 | null): void {
         this.handposition = handposition;
+        this.cursorParticleSystem.evaluate(handposition);
         if (!handposition) return;
         for (const interactable of this.interactables) {
             interactable.evaluate(gesture, handposition);
@@ -118,20 +123,23 @@ export class UI {
 
     public draw(debug: boolean = false): void {
         this.sk.push();
+        for (const interactable of this.interactables) {
+            interactable.draw();
+        }
+        this.cursorParticleSystem.draw();
         if (debug) {
             this.sliderBox.draw(this.sk);
             this.buttonBox.draw(this.sk);
             this.wheelBox.draw(this.sk);
-        }
-        for (const interactable of this.interactables) {
-            interactable.draw();
-        }
-        if (this.handposition) {
-            this.sk.stroke(Color.light);
-            this.sk.fill(Color.light);
-            this.sk.line(this.handposition.x, 0, this.handposition.x, this.sk.height);
-            this.sk.line(0, this.handposition.y, this.sk.width, this.handposition.y);
-            this.sk.ellipse(this.handposition.x, this.handposition.y, 10, 10);
+            if (this.handposition) {
+                this.sk.push();
+                this.sk.stroke(Color.debug1);
+                this.sk.fill(Color.debug1);
+                this.sk.line(this.handposition.x, 0, this.handposition.x, this.sk.height);
+                this.sk.line(0, this.handposition.y, this.sk.width, this.handposition.y);
+                this.sk.ellipse(this.handposition.x, this.handposition.y, 10, 10);
+                this.sk.pop();
+            }
         }
         this.sk.pop();
     }
