@@ -31,26 +31,26 @@ export class ResultsHandler {
         
         // If we only have one sample, return it as-is
         if (this.buffer.length === 1) {
-            return latest.handposition;
+            return this.handToScreenSpace(latest.handposition);
         }
         
         // If we have two samples, use linear extrapolation
         if (this.buffer.length === 2) {
             const previous = this.buffer[0];
-            if (!previous.handposition) return latest.handposition;
+            if (!previous.handposition) return this.handToScreenSpace(latest.handposition);
             
             const dt = latest.timestamp - previous.timestamp;
-            if (dt <= 0) return latest.handposition;
+            if (dt <= 0) return this.handToScreenSpace(latest.handposition);
             
             const vx = (latest.handposition.x - previous.handposition.x) / dt;
             const vy = (latest.handposition.y - previous.handposition.y) / dt;
             
             const extrapolationTime = performance.now() - latest.timestamp;
             
-            return {
+            return this.handToScreenSpace({
                 x: latest.handposition.x + vx * extrapolationTime,
                 y: latest.handposition.y + vy * extrapolationTime
-            };
+            });
         }
         
         // Quadratic extrapolation with 3 samples (captures acceleration)
@@ -63,12 +63,12 @@ export class ResultsHandler {
         const p0 = this.buffer[this.buffer.length - 3].handposition;
         const t0 = this.buffer[this.buffer.length - 3].timestamp;
         
-        if (!p0 || !p1) return p2;
+        if (!p0 || !p1) return this.handToScreenSpace(p2);
         
         const dt1 = t1 - t0;
         const dt2 = t2 - t1;
         
-        if (dt1 <= 0 || dt2 <= 0) return p2;
+        if (dt1 <= 0 || dt2 <= 0) return this.handToScreenSpace(p2);
         
         // Calculate velocities between samples
         const v1x = (p1.x - p0.x) / dt1;
