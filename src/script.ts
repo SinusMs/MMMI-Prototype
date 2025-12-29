@@ -3,6 +3,7 @@ import { ResultsHandler } from './resultshandler';
 import * as Audio from './audioManager'
 import { UI } from './ui';
 import * as Color from './colors';
+import { Background } from './background';
 
 let vidSrc: p5.MediaElement<HTMLVideoElement> | null = null;
 let canvasEl: HTMLCanvasElement = document.getElementById("p5sketch") as HTMLCanvasElement;
@@ -34,6 +35,7 @@ worker.postMessage({ type: "init" });
 const sketch = (sk: p5) => {
     let textGraphics: p5.Graphics;
     let ui: UI;
+    let bg: Background;
     
     sk.mousePressed = async () => {
         await Audio.initAudio();
@@ -53,24 +55,27 @@ const sketch = (sk: p5) => {
         sk.frameRate(60);
         vidSrc = sk.createCapture(sk.VIDEO) as p5.MediaElement<HTMLVideoElement>;
         vidSrc.elt.onloadeddata = recoginzeGestures;
+        bg = new Background(sk);
     };
     
     sk.draw = () => {
         let t0 = performance.now();
         sk.clear();
-
+        
+        bg.draw();
         // Transform origin to top-left corner (like p5's 2D mode)
         sk.translate(-sk.width / 2, -sk.height / 2);
+        
         
         let handposition = results.getExtrapolatedHandPosition();
         if (handposition) vidSrc?.hide();
         else vidSrc?.show();
-
+        
         ui.evaluate(results.getGesture(), handposition);
         ui.draw(debug);
-
+        
         if (!debug) return;
-
+        
         textGraphics.clear();
         textGraphics.fill(Color.debug1);
         textGraphics.text(results.getGesture(), 10, 30);
