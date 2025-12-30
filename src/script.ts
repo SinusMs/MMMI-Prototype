@@ -40,7 +40,6 @@ const sketch = (sk: p5) => {
     sk.mousePressed = async () => {
         await Audio.initAudio();
         Audio.startLoop();
-        ui?.evaluate("", { x: 0, y: 0 });
     }
     
     sk.setup = () => {
@@ -100,6 +99,16 @@ const sketch = (sk: p5) => {
         }
         if (sk.key === 'd') {
             debug = !debug;
+        }
+        if (sk.keyCode == 13) {
+            console.log("Enter pressed: Resetting audio settings.");
+            for (let i = 0; i < Audio.loopPaths.length; i++) {
+                Audio.setLoopVolume(i, 0.0);
+            }
+            Audio.setEffectValue("reverb", 0.0);
+            Audio.setEffectValue("delay", 0.0);
+            Audio.setEffectValue("filter", 0.5);
+            ui = new UI(sk);
         }
     }
 };

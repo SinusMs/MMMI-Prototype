@@ -42,7 +42,7 @@ export class UI {
             this.interactables.push(new Slider(sk, 
                 { x: minX + i * step, y: maxY }, 
                 { x: minX + i * step, y: minY }, 
-                i == 1 ? 0.5 : 0.0,
+                0.0,
                 (value: number) => Audio.setLoopVolume(i, value),
                 sliderThickness
             ));
