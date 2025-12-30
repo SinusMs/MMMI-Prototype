@@ -22,7 +22,7 @@ export class Background {
             this.stars.push({
                 x: sk.random(-SKETCH_SIZE.x / 2, SKETCH_SIZE.x / 2),
                 y: sk.random(-SKETCH_SIZE.y / 2, SKETCH_SIZE.y / 2),
-                size: sk.random(0.5, 3.5),
+                size: sk.random(0.5, 4.5),
                 brightness: sk.random(0.3, 1.0)
             });
         }
@@ -74,6 +74,7 @@ export class Background {
         const prevArrayBuffer = gl.getParameter(gl.ARRAY_BUFFER_BINDING);
         const prevDepthTest = gl.getParameter(gl.DEPTH_TEST);
         const prevDepthMask = gl.getParameter(gl.DEPTH_WRITEMASK);
+        const prevBlend = gl.getParameter(gl.BLEND);
         
         // Disable all vertex attrib arrays to start clean
         const maxAttribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
@@ -88,6 +89,10 @@ export class Background {
         gl.useProgram(this.shader);
         gl.disable(gl.DEPTH_TEST);
         gl.depthMask(false);
+        
+        // Enable blending for transparency
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         
         // Get attribute locations
         const posLoc = gl.getAttribLocation(this.shader, "aPosition");
@@ -131,7 +136,9 @@ export class Background {
                 gl.enableVertexAttribArray(i);
             }
         }
-        
+        if (prevBlend) gl.enable(gl.BLEND);
+        else gl.disable(gl.BLEND);
+
         // Restore other WebGL state
         gl.bindBuffer(gl.ARRAY_BUFFER, prevArrayBuffer);
         gl.useProgram(prevProgram);
