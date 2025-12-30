@@ -1,5 +1,5 @@
 import { GestureRecognizerResult } from '@mediapipe/tasks-vision';
-import { Vector2 } from './utils.ts';
+import { Vector2, TwoHandsData, HandData } from './utils.ts';
 
 const MAX_BUFFER_SIZE = 3;
 
@@ -10,7 +10,8 @@ const MAX_ACCELERATION = 0.000003;
 const SKETCH_SIZE: Vector2 = { x: 1920 - 16, y: 1080 - 16 };
 
 export class ResultsHandler {
-    private buffer: { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null }[] = [];
+    private leftBuffer: { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null }[] = [];
+    private rightBuffer: { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null }[] = [];
 
     private handToScreenSpace(normalizedPos: { x: number, y: number }): Vector2 {
         return {
@@ -20,23 +21,32 @@ export class ResultsHandler {
     }
 
     public getBuffer(): { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null }[] {
-        return this.buffer;
+        // Return combined buffer for backward compatibility if needed
+        return [...this.leftBuffer, ...this.rightBuffer];
     }
 
-    public getExtrapolatedHandPosition(): Vector2 | null {
-        if (this.buffer.length === 0) return null;
+    public getLeftBuffer(): { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null }[] {
+        return this.leftBuffer;
+    }
+
+    public getRightBuffer(): { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null }[] {
+        return this.rightBuffer;
+    }
+
+    private getExtrapolatedHandPositionFromBuffer(buffer: { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null }[]): Vector2 | null {
+        if (buffer.length === 0) return null;
         
-        const latest = this.buffer[this.buffer.length - 1];
+        const latest = buffer[buffer.length - 1];
         if (!latest.handposition) return null;
         
         // If we only have one sample, return it as-is
-        if (this.buffer.length === 1) {
+        if (buffer.length === 1) {
             return this.handToScreenSpace(latest.handposition);
         }
         
         // If we have two samples, use linear extrapolation
-        if (this.buffer.length === 2) {
-            const previous = this.buffer[0];
+        if (buffer.length === 2) {
+            const previous = buffer[0];
             if (!previous.handposition) return this.handToScreenSpace(latest.handposition);
             
             const dt = latest.timestamp - previous.timestamp;
@@ -57,11 +67,11 @@ export class ResultsHandler {
         const p2 = latest.handposition;
         const t2 = latest.timestamp;
         
-        const p1 = this.buffer[this.buffer.length - 2].handposition;
-        const t1 = this.buffer[this.buffer.length - 2].timestamp;
+        const p1 = buffer[buffer.length - 2].handposition;
+        const t1 = buffer[buffer.length - 2].timestamp;
         
-        const p0 = this.buffer[this.buffer.length - 3].handposition;
-        const t0 = this.buffer[this.buffer.length - 3].timestamp;
+        const p0 = buffer[buffer.length - 3].handposition;
+        const t0 = buffer[buffer.length - 3].timestamp;
         
         if (!p0 || !p1) return this.handToScreenSpace(p2);
         
@@ -100,35 +110,120 @@ export class ResultsHandler {
         return this.handToScreenSpace(normalizedPos);
     }
 
+    public getExtrapolatedHandPosition(): Vector2 | null {
+        // For backward compatibility, return right hand (or left if right not available)
+        const rightPos = this.getExtrapolatedHandPositionFromBuffer(this.rightBuffer);
+        if (rightPos) return rightPos;
+        return this.getExtrapolatedHandPositionFromBuffer(this.leftBuffer);
+    }
+
+    public getTwoHandsData(): TwoHandsData {
+        return {
+            left: {
+                position: this.getExtrapolatedHandPositionFromBuffer(this.leftBuffer),
+                gesture: this.getGestureFromBuffer(this.leftBuffer)
+            },
+            right: {
+                position: this.getExtrapolatedHandPositionFromBuffer(this.rightBuffer),
+                gesture: this.getGestureFromBuffer(this.rightBuffer)
+            }
+        };
+    }
+
+    private getLatestResultFromBuffer(buffer: { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null }[]): { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null } | null {
+        if (buffer.length == 0) return null;
+        return buffer[buffer.length - 1];
+    }
+
     public getLatestResult(): { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null } | null { 
-        if (this.buffer.length == 0) return null; 
-        return this.buffer[this.buffer.length - 1]; 
+        // For backward compatibility, return right hand result or left if right not available
+        const rightResult = this.getLatestResultFromBuffer(this.rightBuffer);
+        if (rightResult) return rightResult;
+        return this.getLatestResultFromBuffer(this.leftBuffer);
+    }
+
+    private getGestureFromBuffer(buffer: { result: GestureRecognizerResult, timestamp: number, handposition: Vector2 | null }[]): string {
+        const latestResult = this.getLatestResultFromBuffer(buffer);
+        return latestResult?.result?.gestures[0]?.at(0)?.categoryName || '';
     }
 
     public getGesture(): string {
-        return this.getLatestResult()?.result?.gestures[0]?.at(0)?.categoryName || '';
+        // For backward compatibility, return right hand gesture or left if right not available
+        const rightGesture = this.getGestureFromBuffer(this.rightBuffer);
+        if (rightGesture) return rightGesture;
+        return this.getGestureFromBuffer(this.leftBuffer);
     }
 
     public addResult(result: GestureRecognizerResult, timestamp: number): void {
-        let handposition = this.calcHandPosition(result);
-        if (!handposition) {
-            this.buffer = [];
+        // MediaPipe can detect multiple hands. Separate them into left and right buffers
+        // result.handedness gives us information about which hand (Left/Right)
+        
+        // Clear buffers first - we'll repopulate based on current frame
+        const tempLeftBuffer = [...this.leftBuffer];
+        const tempRightBuffer = [...this.rightBuffer];
+        
+        // Check if we have any hands in this frame
+        if (!result.landmarks || result.landmarks.length === 0) {
+            this.leftBuffer = [];
+            this.rightBuffer = [];
             return;
         }
-        this.buffer.push({ result, timestamp, handposition }); 
-        if (this.buffer.length > MAX_BUFFER_SIZE) {
-            this.buffer.shift();
+
+        // Process each detected hand
+        let leftHandProcessed = false;
+        let rightHandProcessed = false;
+        
+        for (let i = 0; i < result.landmarks.length; i++) {
+            const handedness = result.handednesses?.[i]?.[0]?.categoryName;
+            const handposition = this.calcHandPositionFromLandmarks(result.landmarks[i]);
+            
+            if (!handposition) continue;
+            
+            // Create a result object for this specific hand
+            const handResult: GestureRecognizerResult = {
+                landmarks: [result.landmarks[i]],
+                worldLandmarks: result.worldLandmarks ? [result.worldLandmarks[i]] : [],
+                handedness: result.handedness ? [result.handedness[i]] : [],
+                handednesses: result.handednesses ? [result.handednesses[i]] : [],
+                gestures: result.gestures ? [result.gestures[i]] : []
+            };
+            
+            const bufferEntry = { result: handResult, timestamp, handposition };
+            
+            // MediaPipe's handedness is from the perspective of the person in the image
+            // "Left" means the person's left hand, which appears on the right in a mirrored camera
+            if (handedness === 'Left') {
+                if (!leftHandProcessed) {
+                    tempLeftBuffer.push(bufferEntry);
+                    if (tempLeftBuffer.length > MAX_BUFFER_SIZE) {
+                        tempLeftBuffer.shift();
+                    }
+                    leftHandProcessed = true;
+                }
+            } else if (handedness === 'Right') {
+                if (!rightHandProcessed) {
+                    tempRightBuffer.push(bufferEntry);
+                    if (tempRightBuffer.length > MAX_BUFFER_SIZE) {
+                        tempRightBuffer.shift();
+                    }
+                    rightHandProcessed = true;
+                }
+            }
         }
+        
+        // If a hand wasn't detected in this frame, clear its buffer
+        this.leftBuffer = leftHandProcessed ? tempLeftBuffer : [];
+        this.rightBuffer = rightHandProcessed ? tempRightBuffer : [];
     }
 
-    private calcHandPosition(result: GestureRecognizerResult): Vector2 | null {
+    private calcHandPositionFromLandmarks(landmarks: any[]): Vector2 | null {
         const pts = [
-            result.landmarks?.at(0)?.at(0),
-            result.landmarks?.at(0)?.at(1),
-            result.landmarks?.at(0)?.at(5),
-            result.landmarks?.at(0)?.at(9),
-            result.landmarks?.at(0)?.at(17),
-            result.landmarks?.at(0)?.at(13)
+            landmarks?.at(0),
+            landmarks?.at(1),
+            landmarks?.at(5),
+            landmarks?.at(9),
+            landmarks?.at(17),
+            landmarks?.at(13)
         ];
         let x = 0, y = 0;
         for (let i = 0; i < pts.length; i++) {

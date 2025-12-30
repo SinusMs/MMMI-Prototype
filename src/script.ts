@@ -73,24 +73,27 @@ const sketch = (sk: p5) => {
         sk.translate(-sk.width / 2, -sk.height / 2);
         
         
-        let handposition = results.getExtrapolatedHandPosition();
-        if (handposition) vidSrc?.hide();
+        let twoHandsData = results.getTwoHandsData();
+        let hasAnyHand = twoHandsData.left.position || twoHandsData.right.position;
+        if (hasAnyHand) vidSrc?.hide();
         else vidSrc?.show();
         
-        ui.evaluate(results.getGesture(), handposition);
+        ui.evaluate(twoHandsData);
         ui.draw(debug);
         
         if (!debug) return;
         
         textGraphics.clear();
         textGraphics.fill(Color.debug1);
-        textGraphics.text(results.getGesture(), 10, 30);
-        textGraphics.text("framerate: " + sk.frameRate().toFixed(1) + " fps", 10, 50);
-        textGraphics.text("total video processing time: " + vidProcessingTime.toFixed(1).padStart(4, '0') + " ms", 10, 70);
-        textGraphics.text("recognize time: " + recognizeTime.toFixed(1).padStart(4, '0') + " ms", 10, 90);
-        textGraphics.text("draw time: " + (performance.now() - t0).toFixed(1).padStart(4, '0')+ " ms", 10, 110);
-        textGraphics.text("hand position: " + (handposition ? `(${handposition.x.toFixed(0)}, ${handposition.y.toFixed(0)})` : "N/A"), 10, 130);
-        textGraphics.text("Frequency Bands: " + Audio.getFrequencyBands().map(f => f.toFixed(2)).join(", "), 10, 150);
+        textGraphics.text(`Left: ${twoHandsData.left.gesture}`, 10, 30);
+        textGraphics.text(`Right: ${twoHandsData.right.gesture}`, 10, 50);
+        textGraphics.text("framerate: " + sk.frameRate().toFixed(1) + " fps", 10, 70);
+        textGraphics.text("total video processing time: " + vidProcessingTime.toFixed(1).padStart(4, '0') + " ms", 10, 90);
+        textGraphics.text("recognize time: " + recognizeTime.toFixed(1).padStart(4, '0') + " ms", 10, 110);
+        textGraphics.text("draw time: " + (performance.now() - t0).toFixed(1).padStart(4, '0')+ " ms", 10, 130);
+        textGraphics.text("left hand: " + (twoHandsData.left.position ? `(${twoHandsData.left.position.x.toFixed(0)}, ${twoHandsData.left.position.y.toFixed(0)})` : "N/A"), 10, 150);
+        textGraphics.text("right hand: " + (twoHandsData.right.position ? `(${twoHandsData.right.position.x.toFixed(0)}, ${twoHandsData.right.position.y.toFixed(0)})` : "N/A"), 10, 170);
+        textGraphics.text("Frequency Bands: " + Audio.getFrequencyBands().map(f => f.toFixed(2)).join(", "), 10, 190);
         
         sk.push();
         sk.resetMatrix();

@@ -1,5 +1,5 @@
 import p5 from "p5";
-import { Vector2, lerp, lerpScalar, dist } from "./utils.ts";
+import { Vector2, lerp, lerpScalar, dist, TwoHandsData } from "./utils.ts";
 import * as Color from './colors';
 
 export abstract class Interactable {
@@ -7,12 +7,14 @@ export abstract class Interactable {
     hovering: boolean = false;
     grabbed: boolean = false;
     drag: number = 0.1;
+    // Track which hand is interacting (null if none, 'left' or 'right')
+    activeHand: 'left' | 'right' | null = null;
 
     constructor(sk: p5) {
         this.sk = sk;
     }
 
-    abstract evaluate(gesture: string, handposition: Vector2): void;
+    abstract evaluate(twoHandsData: TwoHandsData): void;
     abstract draw(): void;
 }
 
@@ -26,18 +28,47 @@ export class DraggableEllipse extends Interactable {
         this.radius = radius;
     }
 
-    evaluate(gesture: string, handposition: Vector2): void {
-        let overlapping: boolean = 
-            dist(this.position, handposition) <= this.radius;
-        if (gesture == "Closed_Fist") {
-            if (overlapping) this.grabbed = true;
-        } else {
-            this.grabbed = false;
-        }
-        this.hovering = overlapping;
+    evaluate(twoHandsData: TwoHandsData): void {
+        // Check both hands for interaction
+        const checkHand = (handData: { position: Vector2 | null, gesture: string }, handId: 'left' | 'right') => {
+            if (!handData.position) return false;
+            
+            const overlapping = dist(this.position, handData.position) <= this.radius;
+            
+            if (handData.gesture == "Closed_Fist" && overlapping) {
+                if (!this.grabbed) {
+                    this.grabbed = true;
+                    this.activeHand = handId;
+                }
+                return this.activeHand === handId;
+            }
+            return false;
+        };
+
+        const leftInteracting = checkHand(twoHandsData.left, 'left');
+        const rightInteracting = checkHand(twoHandsData.right, 'right');
         
-        if (this.grabbed) {
-            this.position = lerp(this.position, handposition, this.drag);
+        // If neither hand has a fist gesture, release grab
+        if (twoHandsData.left.gesture !== "Closed_Fist" && twoHandsData.right.gesture !== "Closed_Fist") {
+            this.grabbed = false;
+            this.activeHand = null;
+        }
+        
+        // Check hovering for both hands
+        this.hovering = false;
+        if (twoHandsData.left.position && dist(this.position, twoHandsData.left.position) <= this.radius) {
+            this.hovering = true;
+        }
+        if (twoHandsData.right.position && dist(this.position, twoHandsData.right.position) <= this.radius) {
+            this.hovering = true;
+        }
+        
+        // Update position based on active hand
+        if (this.grabbed && this.activeHand) {
+            const activeHandData = this.activeHand === 'left' ? twoHandsData.left : twoHandsData.right;
+            if (activeHandData.position) {
+                this.position = lerp(this.position, activeHandData.position, this.drag);
+            }
         }
     }
 
@@ -73,32 +104,62 @@ export class Slider extends Interactable {
         this.activeKnobRadius = this.defaultKnobRadius + 7;
     }
 
-    evaluate(gesture: string, handposition: Vector2): void {
-        let overlapping: boolean = 
-            dist(this.knobPos(), handposition) <= this.activeKnobRadius;
-        if (gesture == "Closed_Fist") {
-            if (overlapping) this.grabbed = true;
-        } else {
+    evaluate(twoHandsData: TwoHandsData): void {
+        const knobPos = this.knobPos();
+        
+        // Check both hands for interaction
+        const checkHand = (handData: { position: Vector2 | null, gesture: string }, handId: 'left' | 'right') => {
+            if (!handData.position) return false;
+            
+            const overlapping = dist(knobPos, handData.position) <= this.activeKnobRadius;
+            
+            if (handData.gesture == "Closed_Fist" && overlapping) {
+                if (!this.grabbed) {
+                    this.grabbed = true;
+                    this.activeHand = handId;
+                }
+                return this.activeHand === handId;
+            }
+            return false;
+        };
+
+        const leftInteracting = checkHand(twoHandsData.left, 'left');
+        const rightInteracting = checkHand(twoHandsData.right, 'right');
+        
+        // If neither hand has a fist gesture, release grab
+        if (twoHandsData.left.gesture !== "Closed_Fist" && twoHandsData.right.gesture !== "Closed_Fist") {
             this.grabbed = false;
+            this.activeHand = null;
         }
-        this.hovering = overlapping;
+        
+        // Check hovering for both hands
+        this.hovering = false;
+        if (twoHandsData.left.position && dist(knobPos, twoHandsData.left.position) <= this.activeKnobRadius) {
+            this.hovering = true;
+        }
+        if (twoHandsData.right.position && dist(knobPos, twoHandsData.right.position) <= this.activeKnobRadius) {
+            this.hovering = true;
+        }
+        
         this.knobRadius = this.hovering || this.grabbed ? this.activeKnobRadius : this.defaultKnobRadius;
         
-        if (this.grabbed) {
-            
-            // Project hand position onto the line segment p1p2
-            const lenSquared = this.p1p2.x * this.p1p2.x + this.p1p2.y * this.p1p2.y;
-            
-            if (lenSquared > 0) {
-                // Vector from p1 to hand position
-                const tx = handposition.x - this.p1.x;
-                const ty = handposition.y - this.p1.y;
+        if (this.grabbed && this.activeHand) {
+            const activeHandData = this.activeHand === 'left' ? twoHandsData.left : twoHandsData.right;
+            if (activeHandData.position) {
+                // Project hand position onto the line segment p1p2
+                const lenSquared = this.p1p2.x * this.p1p2.x + this.p1p2.y * this.p1p2.y;
                 
-                // Project onto line
-                let t = (tx * this.p1p2.x + ty * this.p1p2.y) / lenSquared;
-                
-                // Update fill with interpolation for smoothness and clamp to [0, 1]
-                this.fill = Math.max(0, Math.min(1, lerpScalar(this.fill, t, this.drag)));
+                if (lenSquared > 0) {
+                    // Vector from p1 to hand position
+                    const tx = activeHandData.position.x - this.p1.x;
+                    const ty = activeHandData.position.y - this.p1.y;
+                    
+                    // Project onto line
+                    let t = (tx * this.p1p2.x + ty * this.p1p2.y) / lenSquared;
+                    
+                    // Update fill with interpolation for smoothness and clamp to [0, 1]
+                    this.fill = Math.max(0, Math.min(1, lerpScalar(this.fill, t, this.drag)));
+                }
             }
         }
         this.callback?.(this.fill);
@@ -135,20 +196,51 @@ export class Button extends Interactable {
         this.callback = callback;
     }
 
-    evaluate(gesture: string, handposition: Vector2): void {
-        let overlapping: boolean = dist(this.position, handposition) <= this.hoverRadius;
-        
-        if (gesture == "Closed_Fist") {
-            if (overlapping && !this.wasGrabbed) {
-                this.wasGrabbed = true;
-                this.callback?.();
+    evaluate(twoHandsData: TwoHandsData): void {
+        // Check both hands for interaction
+        const checkHand = (handData: { position: Vector2 | null, gesture: string }, handId: 'left' | 'right') => {
+            if (!handData.position) return { overlapping: false, shouldTrigger: false };
+            
+            const overlapping = dist(this.position, handData.position) <= this.hoverRadius;
+            
+            if (handData.gesture == "Closed_Fist" && overlapping) {
+                const shouldTrigger = !this.wasGrabbed;
+                if (!this.grabbed) {
+                    this.grabbed = true;
+                    this.activeHand = handId;
+                    this.wasGrabbed = true;
+                }
+                return { overlapping: true, shouldTrigger: shouldTrigger && this.activeHand === handId };
             }
-            this.grabbed = overlapping;
-        } else {
+            return { overlapping, shouldTrigger: false };
+        };
+
+        const leftResult = checkHand(twoHandsData.left, 'left');
+        const rightResult = checkHand(twoHandsData.right, 'right');
+        
+        // Trigger callback if either hand triggered
+        if (leftResult.shouldTrigger || rightResult.shouldTrigger) {
+            this.callback?.();
+        }
+        
+        // If neither hand has a fist gesture, release grab
+        if (twoHandsData.left.gesture !== "Closed_Fist" && twoHandsData.right.gesture !== "Closed_Fist") {
             this.grabbed = false;
             this.wasGrabbed = false;
+            this.activeHand = null;
         }
-        this.hovering = overlapping;
+        
+        // Check hovering and grabbed state for both hands
+        this.hovering = leftResult.overlapping || rightResult.overlapping;
+        
+        // Update grabbed based on active hand
+        if (this.activeHand) {
+            const activeHandData = this.activeHand === 'left' ? twoHandsData.left : twoHandsData.right;
+            if (activeHandData.position) {
+                this.grabbed = dist(this.position, activeHandData.position) <= this.hoverRadius && 
+                              activeHandData.gesture === "Closed_Fist";
+            }
+        }
 
         this.radius = this.grabbed ? this.defaultRadius : this.hovering ? this.hoverRadius : this.defaultRadius;
     }
@@ -191,28 +283,57 @@ export class Wheel extends Interactable {
         this.callback?.(fill);
     }
 
-    evaluate(gesture: string, handposition: Vector2): void {
-        const distFromCenter = dist(this.position, handposition);
-        const overlapping = distFromCenter <= this.activeRadius;
-        
-        this.hovering = overlapping;
-        this.radius = this.grabbed || this.hovering ? this.activeRadius : this.defaultRadius;
-        
+    evaluate(twoHandsData: TwoHandsData): void {
         const calculateAngle = (pos: Vector2) => {
             let angle = Math.atan2(pos.x - this.position.x, -(pos.y - this.position.y));
             return angle < 0 ? angle + 2 * Math.PI : angle;
         };
         
-        if (gesture == "Closed_Fist") {
-            if (!this.grabbed && overlapping) {
-                this.grabbed = true;
-                this.lastAngle = calculateAngle(handposition);
-                this.grabStartFill = this.fill;
-                this.accumulatedRotation = 0;
-            }
+        // Check both hands for interaction
+        const checkHand = (handData: { position: Vector2 | null, gesture: string }, handId: 'left' | 'right') => {
+            if (!handData.position) return { overlapping: false, shouldGrab: false };
             
-            if (this.grabbed && this.lastAngle !== null) {
-                const currentAngle = calculateAngle(handposition);
+            const distFromCenter = dist(this.position, handData.position);
+            const overlapping = distFromCenter <= this.activeRadius;
+            
+            if (handData.gesture == "Closed_Fist" && overlapping) {
+                if (!this.grabbed) {
+                    return { overlapping: true, shouldGrab: true, angle: calculateAngle(handData.position) };
+                } else if (this.activeHand === handId) {
+                    return { overlapping: true, shouldGrab: false, angle: calculateAngle(handData.position) };
+                }
+            }
+            return { overlapping, shouldGrab: false };
+        };
+
+        const leftResult = checkHand(twoHandsData.left, 'left');
+        const rightResult = checkHand(twoHandsData.right, 'right');
+        
+        // Check hovering for both hands
+        this.hovering = leftResult.overlapping || rightResult.overlapping;
+        this.radius = this.grabbed || this.hovering ? this.activeRadius : this.defaultRadius;
+        
+        // Handle grab initiation
+        if (leftResult.shouldGrab) {
+            this.grabbed = true;
+            this.activeHand = 'left';
+            this.lastAngle = leftResult.angle!;
+            this.grabStartFill = this.fill;
+            this.accumulatedRotation = 0;
+        } else if (rightResult.shouldGrab) {
+            this.grabbed = true;
+            this.activeHand = 'right';
+            this.lastAngle = rightResult.angle!;
+            this.grabStartFill = this.fill;
+            this.accumulatedRotation = 0;
+        }
+        
+        // Handle rotation while grabbed
+        if (this.grabbed && this.activeHand && this.lastAngle !== null) {
+            const activeHandData = this.activeHand === 'left' ? twoHandsData.left : twoHandsData.right;
+            
+            if (activeHandData.gesture === "Closed_Fist" && activeHandData.position) {
+                const currentAngle = calculateAngle(activeHandData.position);
                 let angleDiff = currentAngle - this.lastAngle;
                 
                 // Normalize to shortest path for this frame only
@@ -225,11 +346,21 @@ export class Wheel extends Interactable {
                 
                 const targetFill = Math.max(0, Math.min(1, this.grabStartFill + this.accumulatedRotation / (this.end - this.start)));
                 this.fill = lerpScalar(this.fill, targetFill, this.drag);
+            } else {
+                // Release if hand stops making fist gesture
+                this.grabbed = false;
+                this.lastAngle = null;
+                this.activeHand = null;
             }
-        } else {
+        }
+        
+        // Release if neither hand has fist gesture
+        if (twoHandsData.left.gesture !== "Closed_Fist" && twoHandsData.right.gesture !== "Closed_Fist") {
             this.grabbed = false;
             this.lastAngle = null;
+            this.activeHand = null;
         }
+        
         this.callback?.(this.fill);
     }
 

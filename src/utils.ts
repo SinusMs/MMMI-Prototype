@@ -17,3 +17,13 @@ export type Vector2 = {
     x: number,
     y: number
 }
+
+export type HandData = {
+    position: Vector2 | null;
+    gesture: string;
+}
+
+export type TwoHandsData = {
+    left: HandData;
+    right: HandData;
+}

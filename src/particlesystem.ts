@@ -1,12 +1,13 @@
 import p5 from "p5";
-import { Vector2 } from "./utils";
+import { Vector2, TwoHandsData } from "./utils";
 import * as Color from './colors';
 
 export class CursorParticleSystem {
     sk: p5;
     particles: Particle[] = [];
     particlesToEmit: number = 0;
-    prevHandPos: Vector2 | null = null;
+    prevLeftHandPos: Vector2 | null = null;
+    prevRightHandPos: Vector2 | null = null;
 
     particlesPerSecond: number = 7;
     particlesPerPixel: number = 0.07;
@@ -16,17 +17,36 @@ export class CursorParticleSystem {
         this.sk = sk;
     }
 
-    evaluate(gesture: string, handposition: Vector2 | null = { x: this.sk.mouseX, y: this.sk.mouseY }): void {
-        let movementDistance = handposition == null || this.prevHandPos == null ? 0 :
-            Math.hypot(handposition.x - this.prevHandPos.x, handposition.y - this.prevHandPos.y);
-        if (this.prevHandPos == null && handposition) this.particlesToEmit += 10;
-        this.prevHandPos = handposition;
+    evaluate(twoHandsData: TwoHandsData): void {
+        // Process left hand
+        this.processHand(twoHandsData.left.position, twoHandsData.left.gesture, this.prevLeftHandPos);
+        this.prevLeftHandPos = twoHandsData.left.position;
+        
+        // Process right hand
+        this.processHand(twoHandsData.right.position, twoHandsData.right.gesture, this.prevRightHandPos);
+        this.prevRightHandPos = twoHandsData.right.position;
 
-        if (handposition){
+        for (let particle of this.particles) {
+            particle.evaluate();
+        }
+
+        this.particles = this.particles.filter(particle => !particle.isDead());
+    }
+
+    private processHand(handPosition: Vector2 | null, gesture: string, prevHandPos: Vector2 | null): void {
+        let movementDistance = handPosition == null || prevHandPos == null ? 0 :
+            Math.hypot(handPosition.x - prevHandPos.x, handPosition.y - prevHandPos.y);
+        
+        if (prevHandPos == null && handPosition) {
+            this.particlesToEmit += 10;
+        }
+
+        if (handPosition) {
             this.particlesToEmit += this.particlesPerPixel * movementDistance;
             this.particlesToEmit += this.particlesPerSecond * (this.sk.deltaTime / 1000);
             let integralParticlesToEmit = Math.floor(this.particlesToEmit);
             this.particlesToEmit -= integralParticlesToEmit;
+            
             if (gesture == "Closed_Fist") {
                 integralParticlesToEmit *= 2;
                 for (let i = 0; i < integralParticlesToEmit; i++) {
@@ -38,20 +58,19 @@ export class CursorParticleSystem {
                         this.sk,
                         lifeTime,
                         10 + Math.random() * 5,
-                        this.sk.createVector(handposition.x, handposition.y).add(position), 
+                        this.sk.createVector(handPosition.x, handPosition.y).add(position), 
                         velocity,
                         acceleration
                     ));
                 }
-            }
-            else {
+            } else {
                 for (let i = 0; i < integralParticlesToEmit; i++) {
                     let pos = p5.Vector.random2D().mult(Math.random() * this.emitterRadius);
                     this.particles.push(new Particle(
                         this.sk,
                         0.5,
                         10 + Math.random() * 10,
-                        this.sk.createVector(handposition.x, handposition.y).add(pos), 
+                        this.sk.createVector(handPosition.x, handPosition.y).add(pos), 
                         this.sk.createVector(
                             (Math.random() - 0.5) * 2 * 10, 
                             (Math.random() - 0.5) * 2 * 10
@@ -61,12 +80,6 @@ export class CursorParticleSystem {
                 }
             }
         }
-
-        for (let particle of this.particles) {
-            particle.evaluate();
-        }
-
-        this.particles = this.particles.filter(particle => !particle.isDead());
     }
 
     draw(): void {

@@ -1,4 +1,4 @@
-import { Vector2 } from "./utils";
+import { Vector2, TwoHandsData } from "./utils";
 import p5 from "p5";
 import * as Audio from './audioManager'
 import { Interactable, Slider, Button, Wheel } from './interactable';
@@ -12,7 +12,10 @@ export class UI {
     buttonBox: Box;
     wheelBox: Box;
     interactables: Interactable[];
-    handposition: Vector2 | null = null;
+    twoHandsData: TwoHandsData = {
+        left: { position: null, gesture: '' },
+        right: { position: null, gesture: '' }
+    };
     cursorParticleSystem: CursorParticleSystem;
 
     constructor(sk: p5) {
@@ -112,12 +115,11 @@ export class UI {
         this.cursorParticleSystem = new CursorParticleSystem(sk);
     }
 
-    public evaluate(gesture: string, handposition: Vector2 | null): void {
-        this.handposition = handposition;
-        this.cursorParticleSystem.evaluate(gesture, handposition);
-        if (!handposition) return;
+    public evaluate(twoHandsData: TwoHandsData): void {
+        this.twoHandsData = twoHandsData;
+        this.cursorParticleSystem.evaluate(twoHandsData);
         for (const interactable of this.interactables) {
-            interactable.evaluate(gesture, handposition);
+            interactable.evaluate(twoHandsData);
         }
     }
 
@@ -131,13 +133,24 @@ export class UI {
             this.sliderBox.draw(this.sk);
             this.buttonBox.draw(this.sk);
             this.wheelBox.draw(this.sk);
-            if (this.handposition) {
+            // Draw debug visualization for left hand
+            if (this.twoHandsData.left.position) {
                 this.sk.push();
-                this.sk.stroke(Color.debug1);
-                this.sk.fill(Color.debug1);
-                this.sk.line(this.handposition.x, 0, this.handposition.x, this.sk.height);
-                this.sk.line(0, this.handposition.y, this.sk.width, this.handposition.y);
-                this.sk.ellipse(this.handposition.x, this.handposition.y, 10, 10);
+                this.sk.stroke(Color.accent5); // Blue for left hand
+                this.sk.fill(Color.accent5);
+                this.sk.line(this.twoHandsData.left.position.x, 0, this.twoHandsData.left.position.x, this.sk.height);
+                this.sk.line(0, this.twoHandsData.left.position.y, this.sk.width, this.twoHandsData.left.position.y);
+                this.sk.ellipse(this.twoHandsData.left.position.x, this.twoHandsData.left.position.y, 10, 10);
+                this.sk.pop();
+            }
+            // Draw debug visualization for right hand
+            if (this.twoHandsData.right.position) {
+                this.sk.push();
+                this.sk.stroke(Color.accent1); // Red for right hand
+                this.sk.fill(Color.accent1);
+                this.sk.line(this.twoHandsData.right.position.x, 0, this.twoHandsData.right.position.x, this.sk.height);
+                this.sk.line(0, this.twoHandsData.right.position.y, this.sk.width, this.twoHandsData.right.position.y);
+                this.sk.ellipse(this.twoHandsData.right.position.x, this.twoHandsData.right.position.y, 10, 10);
                 this.sk.pop();
             }
         }
