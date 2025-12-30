@@ -31,6 +31,10 @@ const highpass = new Tone.Filter({
 // Master Bus für Loops
 const masterBus = new Tone.Gain(1).connect(highpass);
 
+// FFT Analyzer für Frequenzanalyse
+const fftAnalyser = new Tone.Analyser({ type: "fft", size: 512 });
+masterBus.connect(fftAnalyser);
+
 // Delay und Reverb parallel vom Filter-Ausgang abgreifen
 lowpass.connect(delay);
 lowpass.connect(reverb);
@@ -167,4 +171,88 @@ export function setEffectValue(type: 'reverb' | 'delay' | 'filter', value01: num
             lowpass.frequency.rampTo(20000, 0.1); // LP bleibt oben (neutral)
         }
     }
+}
+
+/**
+ * Gibt die normalisierte Lautstärke des masterBus aufgeteilt nach Frequenzbereichen zurück
+ * @returns Array mit normalisierten Werten (0-1) für [bass, lowMid, highMid, high]
+ */
+export function getFrequencyBands(): number[] {
+    if (!isLoaded) {
+        return [0, 0, 0, 0];
+    }
+
+    // FFT-Daten holen (Frequenzspektrum)
+    const values = fftAnalyser.getValue() as Float32Array;
+    const fftSize = values.length;
+    const sampleRate = Tone.context.sampleRate;
+    const nyquist = sampleRate / 2;
+
+    // Frequenzbereiche definieren (automatisch in 4 Bänder aufgeteilt)
+    const globalMinFreq = 20;
+    const globalMaxFreq = 1500;
+    const numBands = 4;
+    
+    // Logarithmische Aufteilung
+    const logMin = Math.log(globalMinFreq);
+    const logMax = Math.log(globalMaxFreq);
+    const logStep = (logMax - logMin) / numBands;
+    
+    const bassRange = { 
+        min: Math.exp(logMin + 0 * logStep), 
+        max: Math.exp(logMin + 1 * logStep) 
+    };
+    const lowMidRange = { 
+        min: Math.exp(logMin + 1 * logStep), 
+        max: Math.exp(logMin + 2 * logStep) 
+    };
+    const highMidRange = { 
+        min: Math.exp(logMin + 2 * logStep), 
+        max: Math.exp(logMin + 3 * logStep) 
+    };
+    const highRange = { 
+        min: Math.exp(logMin + 3 * logStep), 
+        max: Math.exp(logMin + 4 * logStep) 
+    };
+
+    // Hilfsfunktion: Frequenz zu FFT-Bin-Index
+    const freqToBin = (freq: number) => Math.round((freq / nyquist) * fftSize);
+
+    // Bins für jeden Bereich berechnen
+    const bassBins = { start: freqToBin(bassRange.min), end: freqToBin(bassRange.max) };
+    const lowMidBins = { start: freqToBin(lowMidRange.min), end: freqToBin(lowMidRange.max) };
+    const highMidBins = { start: freqToBin(highMidRange.min), end: freqToBin(highMidRange.max) };
+    const highBins = { start: freqToBin(highRange.min), end: freqToBin(highRange.max) };
+
+    // Durchschnittliche dB-Werte pro Bereich berechnen
+    const calcAverage = (start: number, end: number): number => {
+        let sum = 0;
+        let count = 0;
+        for (let i = start; i < end && i < fftSize; i++) {
+            sum += values[i]; // FFT values are in dB
+            count++;
+        }
+        return count > 0 ? sum / count : -100; // Default to -100 dB (silence)
+    };
+
+    const bassAvgDb = calcAverage(bassBins.start, bassBins.end);
+    const lowMidAvgDb = calcAverage(lowMidBins.start, lowMidBins.end);
+    const highMidAvgDb = calcAverage(highMidBins.start, highMidBins.end);
+    const highAvgDb = calcAverage(highBins.start, highBins.end);
+
+    // Normalisierung: dB-Bereich (-100 bis 0) auf (0 bis 1) mappen
+    // -100 dB = silence = 0, -30 dB = loud = 1
+    const dbToNormalized = (db: number): number => {
+        const minDb = -100; // Silence threshold
+        const maxDb = -40;  // "Loud" threshold (adjust based on your audio)
+        const normalized = (db - minDb) / (maxDb - minDb);
+        return Math.min(1, Math.max(0, normalized));
+    };
+
+    return [
+        dbToNormalized(bassAvgDb),
+        dbToNormalized(lowMidAvgDb),
+        dbToNormalized(highMidAvgDb),
+        dbToNormalized(highAvgDb)
+    ];
 }
