@@ -11,6 +11,18 @@ let results: ResultsHandler = new ResultsHandler();
 let vidProcessingTime: number = -1;
 let recognizeTime: number = -1;
 let debug: boolean = false;
+let started: boolean = false;
+
+const welcomePopup = document.getElementById('welcome-popup');
+const startButton = document.getElementById('start-button');
+if (startButton && welcomePopup) {
+    startButton.addEventListener('click', async () => {
+        started = true;
+        welcomePopup.classList.add('hidden');
+        await Audio.initAudio();
+        Audio.startLoop();
+    });
+}
 
 const worker = new Worker(new URL('./gesture-worker.js', import.meta.url));
 worker.onmessage = (e) => {
@@ -36,11 +48,6 @@ const sketch = (sk: p5) => {
     let textGraphics: p5.Graphics;
     let ui: UI;
     let bg: Background;
-    
-    sk.mousePressed = async () => {
-        await Audio.initAudio();
-        Audio.startLoop();
-    }
     
     sk.setup = () => {
         sk.createCanvas(1920 - 16, 1080 - 16, sk.WEBGL, canvasEl); 
