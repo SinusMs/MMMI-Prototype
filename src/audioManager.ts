@@ -28,18 +28,25 @@ const highpass = new Tone.Filter({
     Q: 1
 }).connect(lowpass);
 
-// Master Bus für Loops
+// Master Bus für Loops und Samples
 const masterBus = new Tone.Gain(1).connect(highpass);
-
-// FFT Analyzer für Frequenzanalyse
-const fftAnalyser = new Tone.Analyser({ type: "fft", size: 512 });
-masterBus.connect(fftAnalyser);
 
 // Delay und Reverb parallel vom Filter-Ausgang abgreifen
 lowpass.connect(delay);
 lowpass.connect(reverb);
 
+// FFT Analyzer NACH allen Effekten für komplette Analyse
+// Wir greifen das Signal vom lowpass ab (nach Filtern, vor Delay/Reverb Mix)
+const analysisBus = new Tone.Gain(1);
+lowpass.connect(analysisBus);
+delay.connect(analysisBus);
+reverb.connect(analysisBus);
+
+const fftAnalyser = new Tone.Analyser({ type: "fft", size: 512 });
+analysisBus.connect(fftAnalyser);
+
 export let loopVolumes: Tone.Volume[] = [];
+export let sampleVolumes: Tone.Volume[] = [];
 
 export const loopPaths = [
     "audio/track1.wav",
@@ -85,13 +92,17 @@ export async function initAudio() {
         loopPlayers.push(player);
     }
 
-    // Samples laden
+    // Samples laden - durch masterBus routen mit Volumenreduktion
     for (let i = 0; i < samplePaths.length; i++) {
+        // Samples mit -20dB leiser (ca. 10% Amplitude) um Übersteuerung zu vermeiden
+        const vol = new Tone.Volume(-20).connect(masterBus);
+        sampleVolumes.push(vol);
+        
         const player = new Tone.Player({
             url: samplePaths[i],
             loop: false,
             autostart: false
-        }).toDestination();
+        }).connect(vol);
         samplePlayers.push(player);
     }
 
