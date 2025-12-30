@@ -84,6 +84,7 @@ const sketch = (sk: p5) => {
         textGraphics.text("recognize time: " + recognizeTime.toFixed(1).padStart(4, '0') + " ms", 10, 90);
         textGraphics.text("draw time: " + (performance.now() - t0).toFixed(1).padStart(4, '0')+ " ms", 10, 110);
         textGraphics.text("hand position: " + (handposition ? `(${handposition.x.toFixed(0)}, ${handposition.y.toFixed(0)})` : "N/A"), 10, 130);
+        textGraphics.text("Frequency Bands: " + Audio.getFrequencyBands().map(f => f.toFixed(2)).join(", "), 10, 150);
         
         sk.push();
         sk.resetMatrix();

@@ -178,7 +178,7 @@ export function setEffectValue(type: 'reverb' | 'delay' | 'filter', value01: num
  * @param n Anzahl der Frequenzbänder (Standard: 4)
  * @returns Array mit normalisierten Werten (0-1) für die Frequenzbänder
  */
-export function getFrequencyBands(n: number = 4): number[] {
+export function getFrequencyBands(n: number = 6): number[] {
     if (!isLoaded) {
         return Array(n).fill(0);
     }

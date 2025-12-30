@@ -1,29 +1,32 @@
 import p5 from "p5";
 import vertSrc from '/star.vert?url&raw';
 import fragSrc from '/star.frag?url&raw';
+import * as Audio from './audioManager';
 
 const SKETCH_SIZE = { x: 1920 - 16, y: 1080 - 16 };
 export class Background {
     sk: p5;
-    stars: { x: number, y: number, size: number, brightness: number }[] = [];
+    stars: { x: number, y: number, size: number, brightness: number, animationSeed: number }[] = [];
     gl: WebGLRenderingContext;
     shader: WebGLProgram;
     positionBuffer: WebGLBuffer;
     sizeBuffer: WebGLBuffer;
     brightnessBuffer: WebGLBuffer;
+    animationSeedBuffer: WebGLBuffer;
     
     constructor(sk: p5) {
         this.sk = sk;
         this.gl = (sk as any)._renderer.GL;
         
         // Generate stars
-        const numStars = 3000;
+        const numStars = 20000;
         for (let i = 0; i < numStars; i++) {
             this.stars.push({
                 x: sk.random(-SKETCH_SIZE.x / 2, SKETCH_SIZE.x / 2),
                 y: sk.random(-SKETCH_SIZE.y / 2, SKETCH_SIZE.y / 2),
-                size: sk.random(0.5, 4.5),
-                brightness: sk.random(0.3, 1.0)
+                size: sk.random(1.0, 4.0),
+                brightness: sk.random(0.3, 1.0),
+                animationSeed: sk.random(0, 1000)
             });
         }
         
@@ -34,6 +37,7 @@ export class Background {
         const positions = new Float32Array(this.stars.flatMap(s => [s.x, s.y, 0]));
         const sizes = new Float32Array(this.stars.map(s => s.size));
         const brightness = new Float32Array(this.stars.map(s => s.brightness));
+        const animationSeed = new Float32Array(this.stars.map(s => s.animationSeed));
         
         this.positionBuffer = this.gl.createBuffer()!;
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
@@ -46,6 +50,10 @@ export class Background {
         this.brightnessBuffer = this.gl.createBuffer()!;
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.brightnessBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, brightness, this.gl.STATIC_DRAW);
+
+        this.animationSeedBuffer = this.gl.createBuffer()!;
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.animationSeedBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, animationSeed, this.gl.STATIC_DRAW);
     }
     
     createShaderProgram(): WebGLProgram {
@@ -53,14 +61,26 @@ export class Background {
         this.gl.shaderSource(vertShader, vertSrc);
         this.gl.compileShader(vertShader);
         
+        if (!this.gl.getShaderParameter(vertShader, this.gl.COMPILE_STATUS)) {
+            console.error('Vertex shader compilation error:', this.gl.getShaderInfoLog(vertShader));
+        }
+        
         const fragShader = this.gl.createShader(this.gl.FRAGMENT_SHADER)!;
         this.gl.shaderSource(fragShader, fragSrc);
         this.gl.compileShader(fragShader);
+        
+        if (!this.gl.getShaderParameter(fragShader, this.gl.COMPILE_STATUS)) {
+            console.error('Fragment shader compilation error:', this.gl.getShaderInfoLog(fragShader));
+        }
         
         const program = this.gl.createProgram()!;
         this.gl.attachShader(program, vertShader);
         this.gl.attachShader(program, fragShader);
         this.gl.linkProgram(program);
+        
+        if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+            console.error('Shader program linking error:', this.gl.getProgramInfoLog(program));
+        }
         
         return program;
     }
@@ -98,10 +118,19 @@ export class Background {
         const posLoc = gl.getAttribLocation(this.shader, "aPosition");
         const sizeLoc = gl.getAttribLocation(this.shader, "aSize");
         const brightLoc = gl.getAttribLocation(this.shader, "aBrightness");
+        const animSeedLoc = gl.getAttribLocation(this.shader, "aAnimationSeed");
         
         // Get uniform locations
         const mvMatrixLoc = gl.getUniformLocation(this.shader, "uModelViewMatrix");
         const projMatrixLoc = gl.getUniformLocation(this.shader, "uProjectionMatrix");
+        const freqBandsLoc = gl.getUniformLocation(this.shader, "uFrequencyBands");
+        const timeLoc = gl.getUniformLocation(this.shader, "uTime");
+        
+        // Set time uniform
+        gl.uniform1f(timeLoc, this.sk.millis() / 10000);
+        
+        // Set audio frequency bands uniform
+        gl.uniform1fv(freqBandsLoc, new Float32Array(Audio.getFrequencyBands()));
         
         // Set uniforms from p5's renderer
         gl.uniformMatrix4fv(mvMatrixLoc, false, renderer.uMVMatrix.mat4);
@@ -121,6 +150,11 @@ export class Background {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.brightnessBuffer);
         gl.enableVertexAttribArray(brightLoc);
         gl.vertexAttribPointer(brightLoc, 1, gl.FLOAT, false, 0, 0);
+
+        // Bind animation seed buffer
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.animationSeedBuffer);
+        gl.enableVertexAttribArray(animSeedLoc);
+        gl.vertexAttribPointer(animSeedLoc, 1, gl.FLOAT, false, 0, 0);
         
         // Draw stars
         gl.drawArrays(gl.POINTS, 0, this.stars.length);
