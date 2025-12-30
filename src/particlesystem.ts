@@ -67,7 +67,6 @@ export class CursorParticleSystem {
         }
 
         this.particles = this.particles.filter(particle => !particle.isDead());
-        console.log(this.particles.length);
     }
 
     draw(): void {
