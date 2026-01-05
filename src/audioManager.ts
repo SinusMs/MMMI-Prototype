@@ -4,12 +4,15 @@ let loopPlayers: Tone.Player[] = [];
 let samplePlayers: Tone.Player[] = [];
 let isLoaded = false;
 
+
+// Global BPM-SETUP für Delay Effekt
+Tone.Transport.bpm.value = 82;
 // --- EFFEKTE SETUP ---
 
 // Reverb & Delay
 // Initial stumm (wet = 0)
 const reverb = new Tone.Reverb({ decay: 3, wet: 0 }).toDestination();
-const delay = new Tone.FeedbackDelay({ delayTime: "8n", feedback: 0.5, wet: 0 }).toDestination();
+const delay = new Tone.FeedbackDelay({ delayTime: "8t", feedback: 0.1, wet: 0 }).toDestination();
 
 // DJ-Filter Setup
 // WICHTIG: Rolloff -12 ist sanfter und verhindert Verzerrungen besser als der Standard.
@@ -49,18 +52,19 @@ export let loopVolumes: Tone.Volume[] = [];
 export let sampleVolumes: Tone.Volume[] = [];
 
 export const loopPaths = [
-    "audio/track1.wav",
-    "audio/track2.wav",
-    "audio/track3.wav",
-    "audio/track4.wav"
+    "audio/Drums.wav",
+    "audio/Hats.wav",
+    "audio/Bass.wav",
+    "audio/Keys.wav",
+	"audio/Arp.wav"
 ];
 
 export const samplePaths = [
-    "audio/sample1.wav",
-    "audio/sample2.wav",
-    "audio/sample3.wav",
-    "audio/sample4.wav",
-    "audio/sample5.wav"
+	"audio/Eb.wav",
+	"audio/F.wav",
+	"audio/G.wav",
+	"audio/Bb.wav",
+	"audio/cc.wav",
 ];
 
 export async function initAudio() {
