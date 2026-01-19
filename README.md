@@ -13,7 +13,7 @@
 
 ---
 
-## Ausführung
+## Ausführung der Anwendung
 
 ### Voraussetzungen:
 - Ein **Chromium-basierter Browser** (Chrome, Edge, Brave, etc.)
@@ -23,12 +23,12 @@
 
  Öffne diese URL in deinem Browser: (https://sinusms.github.io/MMMI-Prototype/).
 
-### Schritt 3: Webcam-Zugriff genehmigen
+### Webcam-Zugriff genehmigen
 Wenn die Anwendung zum ersten Mal geöffnet wird, wird man aufgefordert, der Anwendung Zugriff auf die Webcam zu gewähren. Dies muss bestätigt werden.
 
 ---
 
-## Verwendung der Anwendung
+## Bedienung der Anwendung
 
 ### Willkommensbildschirm
 Nach dem Start erscheint ein Willkommensbildschirm mit Anleitungen und Anforderungen. Die Anwendung dann mit dem **Start-Button** starten.
