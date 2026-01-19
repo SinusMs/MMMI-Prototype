@@ -2,7 +2,7 @@
 
 ## Über die Anwendung
 
-**MMMI-Prototype** ist eine interaktive Musik-Anwendung, die es Benutzern ermöglicht, Musik mittels **Handgesten** zu steuern und zu manipulieren. Die Anwendung verwendet Ihre Webcam, um Hand- und Fingerbewegungen zu erkennen, und wandelt diese in Musiksteuerbefehle um.
+**MMMI-Prototype** ist eine interaktive Musik-Anwendung, die es Benutzern ermöglicht, Musik mittels **Handgesten** zu steuern und zu manipulieren. Die Anwendung verwendet die Webcam, um Hand- und Fingerbewegungen zu erkennen, und wandelt diese in Musiksteuerbefehle um.
 
 ### Funktionen:
 - **Gestenerkennung**: Erkennt Hand- und Fingerpositionen in Echtzeit
@@ -21,22 +21,22 @@
 - **Gute Beleuchtung** für optimale Gestenerkennung
 - **Systemlautstärke aktiviert**
 
- Öffne diese URL in deinem Browser. (https://sinusms.github.io/MMMI-Prototype/).
+ Öffne diese URL in deinem Browser: (https://sinusms.github.io/MMMI-Prototype/).
 
 ### Schritt 3: Webcam-Zugriff genehmigen
-Wenn du die Anwendung zum ersten Mal öffnest, wirst du aufgefordert, der Anwendung Zugriff auf deine Webcam zu gewähren. Akzeptiere diese Berechtigung.
+Wenn die Anwendung zum ersten Mal geöffnet wird, wird man aufgefordert, der Anwendung Zugriff auf die Webcam zu gewähren. Dies muss bestätigt werden.
 
 ---
 
 ## Verwendung der Anwendung
 
 ### Willkommensbildschirm
-Nach dem Start sieht du einen Willkommensbildschirm mit Anleitungen und Anforderungen. Bestätige mit dem **Start-Button**.
+Nach dem Start erscheint ein Willkommensbildschirm mit Anleitungen und Anforderungen. Die Anwendung dann mit dem **Start-Button** starten.
 
 ### Gestenerkennung
-- Deine Hände und Finger werden als Punkte auf dem Bildschirm angezeigt
-- Bewege deine Hände, um die Bedienelemente zu steuern
-- **Mache eine Faust**, um UI-Elemente zu greifen und zu ziehen
+- Hände und Finger werden als Punkte auf dem Bildschirm angezeigt
+- Hände bewegen, um die Bedienelemente zu steuern
+- **Eine Faust machen**, um UI-Elemente zu greifen und zu ziehen/drehen/bewegen
 
 ### Tastenkombinationen:
 | Taste | Funktion |
@@ -46,9 +46,9 @@ Nach dem Start sieht du einen Willkommensbildschirm mit Anleitungen und Anforder
 | **Strg + Mausrad** | Fenster vergrößern/verkleinern |
 | **F5** | Seite neu laden (hilft bei Erkennungsproblemen) |
 
-### Häufige Probleme:
-- **Hände werden nicht erkannt?** Stelle sicher, dass du gut beleuchtet bist und versuche, die Seite neu zu laden (F5).
-- **Nur Kamerabild sichtbar?** Warte einen Moment, bis die Gestenerkennung geladen hat, oder lade neu.
+### Known Issues:
+- **Hände werden nicht erkannt?** Sicherstellen, dass die Beleuchtung ausreichend ist und/oder die Seite neu laden (F5).
+- **Nur Kamerabild sichtbar?** Einen Moment warten, bis die Gestenerkennung geladen hat, oder Seite neu laden.
 
 ____________________________________________________________________
 
