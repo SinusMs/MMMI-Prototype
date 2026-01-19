@@ -21,7 +21,7 @@
 - **Gute Beleuchtung** für optimale Gestenerkennung
 - **Systemlautstärke aktiviert**
 
- Öffne diese URL in deinem Browser. `https://sinusms.github.io/MMMI-Prototype/`.
+ Öffne diese URL in deinem Browser. (https://sinusms.github.io/MMMI-Prototype/).
 
 ### Schritt 3: Webcam-Zugriff genehmigen
 Wenn du die Anwendung zum ersten Mal öffnest, wirst du aufgefordert, der Anwendung Zugriff auf deine Webcam zu gewähren. Akzeptiere diese Berechtigung.
