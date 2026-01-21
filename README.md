@@ -37,8 +37,6 @@ Lokalen Entwicklungsserver starten:
 - **Gute Beleuchtung** für optimale Gestenerkennung
 - **Systemlautstärke aktiviert**
 
- Öffne diese URL in deinem Browser: (https://sinusms.github.io/MMMI-Prototype/).
-
 ### Webcam-Zugriff genehmigen
 Wenn die Anwendung zum ersten Mal geöffnet wird, wird man aufgefordert, der Anwendung Zugriff auf die Webcam zu gewähren. Dies muss bestätigt werden.
 
@@ -68,13 +66,17 @@ Nach dem Start erscheint ein Willkommensbildschirm mit Anleitungen und Anforderu
 
 ____________________________________________________________________
 
+### **Der MMMI-Prototype:** [Experience starten!](https://sinusms.github.io/MMMI-Prototype/)
+
+____________________________________________________________________
+
 ## AMITUDE-Beschreibung
 
-**(A)**: Eine musikalische Freizeit-Anwendung **(T)**: zur intuitiven LiveManipulation von Musikspuren und Effekten eines Songs **(E)**: im häuslichen
-Freizeitumfeld, **(U)**: indem der Nutzer **(M)**: mittels Handgesten
+**(A):** Eine musikalische Freizeit-Anwendung **(T):** zur intuitiven LiveManipulation von Musikspuren und Effekten eines Songs **(E):** im häuslichen
+Freizeitumfeld, **(U):** indem der Nutzer **(M):** mittels Handgesten
 (Greifbewegungen im Raum) virtuelle Instrumente und Effektregler steuert,
-**(D)**: die über eine Webcam erfasst werden, **(M)**: und haptisch über **(D)**
-Tastatureingaben **(T)**: globale Systemzustände (Reset/Panic) kontrolliert.
+**(D):** die über eine Webcam erfasst werden, **(M):** und haptisch über **(D):**
+Tastatureingaben **(T):** globale Systemzustände (Reset/Panic) kontrolliert.
 
 ## CROW-Framework
 ### Character
