@@ -21,10 +21,10 @@ Lokalen Entwicklungsserver starten:
 **MMMI-Prototype** ist eine interaktive Musik-Anwendung, die es Benutzern ermöglicht, Musik mittels **Handgesten** zu steuern und zu manipulieren. Die Anwendung verwendet die Webcam, um Hand- und Fingerbewegungen zu erkennen, und wandelt diese in Musiksteuerbefehle um.
 
 ### Funktionen:
-- **Gestenerkennung**: Erkennt Hand- und Fingerpositionen in Echtzeit
+- **Gestenerkennung**: Erkennt Handpositionen in Echtzeit
 - **Musikmanipulation**: Steuern Sie Musikspuren, Effekte und Parameter durch intuitive Handbewegungen
 - **Visuelles Feedback**: p5.js-basierte Visualisierung mit Partikeleffekten
-- **Soundsynthese**: Tone.js für Audio-Erzeugung und -Manipulation
+- **Soundsystem**: Tone.js für Audio-Manipulation
 - **Interaktive UI**: Bedienelemente können durch Greifen und Ziehen mit der Hand gesteuert werden
 
 ---
