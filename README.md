@@ -1,5 +1,21 @@
 # MMMI-Prototype
 
+## Entwicklungsumgebung
+### Voraussetzungen
+- **Node.js v24.11.1** und npm erforderlich
+- [Installation Guide](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+
+### Setup
+Abhängigkeiten installieren:
+   ```bash
+   npm install
+   ```
+
+Lokalen Entwicklungsserver starten: 
+   ```bash
+   npx vite
+   ```
+
 ## Über die Anwendung
 
 **MMMI-Prototype** ist eine interaktive Musik-Anwendung, die es Benutzern ermöglicht, Musik mittels **Handgesten** zu steuern und zu manipulieren. Die Anwendung verwendet die Webcam, um Hand- und Fingerbewegungen zu erkennen, und wandelt diese in Musiksteuerbefehle um.
@@ -121,8 +137,3 @@ Tastatureingaben **(T)**: globale Systemzustände (Reset/Panic) kontrolliert.
 
 ## Storyboard
 ![Beschreibung](./public/images/Storyboard_MMMIPrototype.png)
-
-## legacy
-- Install npm + Node.js **v24.11.1** (Installation Guide: https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
- - run `npm install` from the project directory to install all dependencies
- - run `npx vite` to run a local dev server
