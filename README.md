@@ -138,4 +138,4 @@ Tastatureingaben **(T):** globale Systemzustände (Reset/Panic) kontrolliert.
 </table>
 
 ## Storyboard
-![Beschreibung](./public/images/Storyboard_MMMIPrototype.png)
+![Storyboard](./public/images/Storyboard_MMMIPrototype.png)
