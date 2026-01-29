@@ -248,7 +248,7 @@ export class Button extends Interactable {
     draw(): void {
         this.sk.push();
         this.sk.strokeWeight(this.outline);
-        this.sk.stroke(Color.blue400);
+        this.sk.stroke(this.grabbed ? Color.accent3 : Color.blue400);
         this.sk.fill(this.grabbed ? Color.accent3 : Color.blue500);
         this.sk.ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2, 48);
         this.sk.pop();
