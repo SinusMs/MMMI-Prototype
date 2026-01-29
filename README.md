@@ -100,7 +100,6 @@ Tastatureingaben **(T):** globale Systemzustände (Reset/Panic) kontrolliert.
 </tr>
 </table>
 
-## CROW-Framework
 ### Relationship
 
 <table style="width: 100%;">
@@ -111,7 +110,6 @@ Tastatureingaben **(T):** globale Systemzustände (Reset/Panic) kontrolliert.
 </table>
 
 
-## CROW-Framework
 ### Objective
 
 <table style="width: 100%;">
@@ -125,7 +123,6 @@ Tastatureingaben **(T):** globale Systemzustände (Reset/Panic) kontrolliert.
 </tr>
 </table>
 
-## CROW-Framework
 ### Where
 
 

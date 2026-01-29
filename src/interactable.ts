@@ -171,7 +171,7 @@ export class Slider extends Interactable {
         this.sk.stroke(Color.blue400)
         this.sk.line(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
         this.sk.strokeWeight(0);
-        this.sk.fill(Color.blue500)
+        this.sk.fill(this.grabbed ? Color.accent3 : Color.blue500)
         this.sk.ellipse(this.knobPos().x, this.knobPos().y, this.knobRadius * 2, this.knobRadius * 2, 64);
         this.sk.pop();
     }
@@ -249,7 +249,7 @@ export class Button extends Interactable {
         this.sk.push();
         this.sk.strokeWeight(this.outline);
         this.sk.stroke(Color.blue400);
-        this.sk.fill(Color.blue500);
+        this.sk.fill(this.grabbed ? Color.accent3 : Color.blue500);
         this.sk.ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2, 48);
         this.sk.pop();
     }
@@ -396,7 +396,7 @@ export class Wheel extends Interactable {
         const handX = this.position.x + Math.sin(currentAngle) * (arcSpaceToCenter - strokeWeight - handInset);
         const handY = this.position.y - Math.cos(currentAngle) * (arcSpaceToCenter - strokeWeight - handInset);
         
-        this.sk.stroke(Color.blue400);
+        this.sk.stroke(this.grabbed ? Color.accent3 : Color.blue400);
         this.sk.line(this.position.x, this.position.y, handX, handY);
         this.sk.pop();
     }
